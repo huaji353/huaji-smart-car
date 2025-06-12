@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_uart
@@ -66,7 +66,7 @@ stmt  level    source
    52          #define DMA_URXT_TXAL(uart_n)     (*(unsigned char volatile far *)(0x7efa36 + uart_n*0x10))
    53          #define DMA_URXR_CFG(uart_n)      (*(unsigned char volatile far *)(0x7efa38 + uart_n*0x10))
    54          #define DMA_URXR_CR(uart_n)       (*(unsigned char volatile far *)(0x7efa39 + uart_n*0x10))
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 2   
 
    55          #define DMA_URXR_STA(uart_n)      (*(unsigned char volatile far *)(0x7efa3a + uart_n*0x10))
    56          #define DMA_URXR_AMT(uart_n)      (*(unsigned char volatile far *)(0x7efa3b + uart_n*0x10))
@@ -134,7 +134,7 @@ stmt  level    source
   114   1        DMA_URXT_AMT(uart_n)  = len & 0xff;   // 设置传输总字节数(低8位)：n+1
   115   1        DMA_URXT_AMTH(uart_n) = len >> 8;   // 设置传输总字节数(高8位)：n+1
   116   1        DMA_URXT_TXAH(uart_n) = (uint8)((uint16)buff >> 8);
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 3   
 
   117   1        DMA_URXT_TXAL(uart_n) = (uint8)((uint16)buff);
   118   1        DMA_URXT_CR(uart_n) = 0xC0;       // 使能DMA TX功能
@@ -202,7 +202,7 @@ stmt  level    source
   174          
   175          
   176          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 4   
 
              -------------
   177          // 函数简介     打开串口接收中断
@@ -270,7 +270,7 @@ stmt  level    source
   234   1        if(DMA_URXR_STA(uart_n) & 0x03)
   235   1        {
   236   2          ret = 1;
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 5   
 
   237   2          
   238   2          DMA_URXR_STA(uart_n) &= ~0x03;
@@ -338,7 +338,7 @@ stmt  level    source
   295   1        // UART2和SPI2使用同一个寄存器，要么用UART2要么使用SPI2,只能是二选一。
   296   1          //zf_assert(uart_funciton_check(uart_n, UART_FUNCTION_UART));
   297   1        
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 6   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 6   
 
   298   1            
   299   1        // 如果程序在输出了断言信息 并且提示出错位置在这里
@@ -406,7 +406,7 @@ stmt  level    source
   361   2              
   362   2              case UART_2:
   363   2              {
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 7   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 7   
 
   364   3                  //            if(TIM_2 == tim_n)
   365   3                  {
@@ -474,7 +474,7 @@ stmt  level    source
   427   4                      T2H = brt >> 8;
   428   4                      AUXR |= 0x14;
   429   4                  }
-C251 COMPILER V5.60.0,  zf_driver_uart                                                     11/06/25  16:16:32  PAGE 8   
+C251 COMPILER V5.60.0,  zf_driver_uart                                                     12/06/25  20:22:58  PAGE 8   
 
   430   3                  //            else if(TIM_4 == tim_n)
   431   3                  //            {

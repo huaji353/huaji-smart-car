@@ -24,6 +24,7 @@
 #define VCC_ALARM_FLAG                (0)//是否开启VCC报警 
 #define image_open                    (0)//是否开启图片路径测试功能
 #define text_open                     (1)//是否开启测试功能
+#define game_open                     (0)//是否开启游戏功能
 
 extern char txt[32];
 extern float vcc;

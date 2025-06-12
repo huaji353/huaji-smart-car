@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  main                                                               12/06/25  19:59:40  PAGE 1   
+C251 COMPILER V5.60.0,  main                                                               12/06/25  20:23:02  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE main
@@ -66,7 +66,7 @@ stmt  level    source
    49   1          while(1)
    50   1          {
    51   2          // 此处编写需要循环执行的代码
-C251 COMPILER V5.60.0,  main                                                               12/06/25  19:59:40  PAGE 2   
+C251 COMPILER V5.60.0,  main                                                               12/06/25  20:23:02  PAGE 2   
 
    52   2          task_start(0);
    53   3          menu_run();                         // 运行菜单系统

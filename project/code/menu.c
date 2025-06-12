@@ -24,9 +24,10 @@ extern void uart_printf_test(void);
 extern void quaternion_display(void);
 
 // 声明游戏函数
-// extern void function_game(void);
-// extern void function_snake(void);
-
+#if game_open
+extern void function_game(void);
+extern void function_snake(void);
+#endif
 // 声明左右轮PID设置函数
 void function_left_motor_pid_setting(void);
 void function_right_motor_pid_setting(void);
@@ -305,12 +306,13 @@ void menu_init(void) {
     strcpy(menu_pages[MAIN_MENU_INDEX].items[3].name, "Calibration");
     menu_pages[MAIN_MENU_INDEX].items[3].function = function_sensor_calibration;
     menu_pages[MAIN_MENU_INDEX].items[3].has_child = 0;
-    
+    #if game_open
      // 添加游戏菜单
-    //  strcpy(menu_pages[MAIN_MENU_INDEX].items[4].name, "Games");
-    //  menu_pages[MAIN_MENU_INDEX].items[5].function = NULL;
-    //  menu_pages[MAIN_MENU_INDEX].items[5].has_child = 1;
-    // menu_pages[MAIN_MENU_INDEX].items[5].child_index = GAME_MENU_INDEX;
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[4].name, "Games");
+    menu_pages[MAIN_MENU_INDEX].items[5].function = NULL;
+    menu_pages[MAIN_MENU_INDEX].items[5].has_child = 1;
+    menu_pages[MAIN_MENU_INDEX].items[5].child_index = GAME_MENU_INDEX;
+    #endif
 
     strcpy(menu_pages[MAIN_MENU_INDEX].items[4].name, "Seekfree");
     menu_pages[MAIN_MENU_INDEX].items[4].function = seekfree_assistant_open;
@@ -486,21 +488,23 @@ void menu_init(void) {
     menu_pages[TEST_MENU_INDEX].items[7].function = function_inductance_max_min_show;
     menu_pages[TEST_MENU_INDEX].items[7].has_child = 0;
 		#endif
+    #if game_open
     // // 初始化游戏菜单页
-    // strcpy(menu_pages[GAME_MENU_INDEX].title, "GAMES");
-    // menu_pages[GAME_MENU_INDEX].item_count = 3;
+    strcpy(menu_pages[GAME_MENU_INDEX].title, "GAMES");
+    menu_pages[GAME_MENU_INDEX].item_count = 3;
     
-    // strcpy(menu_pages[GAME_MENU_INDEX].items[0].name, "Space Shooter");
-    // menu_pages[GAME_MENU_INDEX].items[0].function = function_game;
-    // menu_pages[GAME_MENU_INDEX].items[0].has_child = 0;
+    strcpy(menu_pages[GAME_MENU_INDEX].items[0].name, "Space Shooter");
+    menu_pages[GAME_MENU_INDEX].items[0].function = function_game;
+    menu_pages[GAME_MENU_INDEX].items[0].has_child = 0;
     
-    // strcpy(menu_pages[GAME_MENU_INDEX].items[1].name, "Snake Game");
-    // menu_pages[GAME_MENU_INDEX].items[1].function = function_snake;
-    // menu_pages[GAME_MENU_INDEX].items[1].has_child = 0;
+    strcpy(menu_pages[GAME_MENU_INDEX].items[1].name, "Snake Game");
+    menu_pages[GAME_MENU_INDEX].items[1].function = function_snake;
+    menu_pages[GAME_MENU_INDEX].items[1].has_child = 0;
     
-    // strcpy(menu_pages[GAME_MENU_INDEX].items[2].name, "Back");
-    // menu_pages[GAME_MENU_INDEX].items[2].function = NULL;
-    // menu_pages[GAME_MENU_INDEX].items[2].has_child = 0;
+    strcpy(menu_pages[GAME_MENU_INDEX].items[2].name, "Back");
+    menu_pages[GAME_MENU_INDEX].items[2].function = NULL;
+    menu_pages[GAME_MENU_INDEX].items[2].has_child = 0;
+    #endif
 }
 
 // 显示当前菜单

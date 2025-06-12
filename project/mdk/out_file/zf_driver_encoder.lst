@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  12/06/25  20:22:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_encoder
@@ -66,7 +66,7 @@ stmt  level    source
    50   1          int16 dat = 0;
    51   1          
    52   1          switch(encoder_n)
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  12/06/25  20:22:55  PAGE 2   
 
    53   1          {
    54   2              case TIM0_ENCOEDER:
@@ -134,7 +134,7 @@ stmt  level    source
   114          {
   115   1          switch(encoder_n)
   116   1          {
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  12/06/25  20:22:55  PAGE 3   
 
   117   2              case TIM0_ENCOEDER:
   118   2              {
@@ -202,7 +202,7 @@ stmt  level    source
   179          //          ÍÆ¼öÊ¹ÓÃ´ø·½Ïò½âÂë±àÂëÆ÷¡£
   180          // Ê¹ÓÃÊ¾Àý      encoder_init_dir(TIM1_ENCOEDER, TIM1_CH1_ENCOEDER_E9, TIM1_CH2_ENCOEDER_E11)
   181          //                              // Ê¹ÓÃ¶¨Ê±Æ÷1 ×ö´ø·½ÏòµÄ±àÂëÆ÷½âÂë£¬ Í¨µÀ1·½ÏòÐÅºÅÒý½ÅE9£¬Í¨µÀ2Âö³åÐÅºÅÒ
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  12/06/25  20:22:55  PAGE 4   
 
              -ý½ÅE11
   182          //-------------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ stmt  level    source
   243   2              
   244   2              case TIM11_ENCOEDER:
   245   2              {
-C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  12/06/25  20:22:55  PAGE 5   
 
   246   3                  T11L = 0;
   247   3                  T11H = 0;

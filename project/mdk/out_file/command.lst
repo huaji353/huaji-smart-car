@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 1   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE command
@@ -66,7 +66,7 @@ stmt  level    source
    46          // 返回参数     void
    47          // 使用示例     seekfree_assistant_oscilloscope_init();
    48          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 2   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 2   
 
              -------------
    49          void seekfree_assistant_oscilloscope_init(void)
@@ -134,7 +134,7 @@ stmt  level    source
   109   2                  PID_MOTOR_R.kd=PID_MOTOR_R_D;
   110   2                  break;
   111   2              case 5://保存参数
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 3   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 3   
 
   112   2                  eeprom_write();
   113   2                  seekfree_assistant_parameter[0]=0;
@@ -202,7 +202,7 @@ stmt  level    source
   163          void seekfree_assistant_oscilloscope_code(void)
   164          {
   165   1        uint8 i;
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 4   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 4   
 
   166   1          if(!seekfree_flag)return;
   167   1          seekfree_assistant_data_analysis();
@@ -270,7 +270,7 @@ stmt  level    source
   221   1      }
   222          
   223          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 5   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 5   
 
              -------------
   224          // 函数简介     编码器数据显示函数，用于在IPS屏幕上显示编码器数据
@@ -338,7 +338,7 @@ stmt  level    source
   278          // 函数简介     ADC初始化函数，用于初始化所有ADC通道
   279          // 参数说明     void
   280          // 返回参数     void
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 6   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 6   
 
   281          // 使用示例     adc_main_init();
   282          //-------------------------------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ stmt  level    source
   333          
   334          //IPS200函数定义区
   335          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 7   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 7   
 
              -------------
   336          // 函数简介     IPS显示测试函数，用于测试IPS显示功能
@@ -474,7 +474,7 @@ stmt  level    source
   391   1          vcc= adc_convert(ADC_CHANNEL5)/10.491;
   392   1      #if VCC_ALARM_FLAG
                    if(vcc<11.1&&vcc>1.5){
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 8   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 8   
 
                        buzzer_time(100);
                    }
@@ -542,7 +542,7 @@ stmt  level    source
   455          //EEPROM写入函数定义区
   456          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 9   
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 9   
 
   457          // 函数简介     EEPROM写入函数，用于将PID参数写入EEPROM
   458          // 参数说明     void
@@ -610,7 +610,7 @@ stmt  level    source
   517   1          // 读取并转换最大值
   518   1          hex_value = ((uint32)inductance_max_min[0] << 16) |
   519   1                      ((uint32)inductance_max_min[1] << 8) |
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 10  
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 10  
 
   520   1                      ((uint32)inductance_max_min[2]);
   521   1          inductance_horizontal_1_max = (float)hex_value;
@@ -678,7 +678,7 @@ stmt  level    source
   581   1          
   582   1          // 写入擦除后的数据
   583   1          // iap_write_buff(0, eeprom_PID, sizeof(eeprom_PID));
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 11  
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 11  
 
   584   1          // iap_write_buff(sizeof(eeprom_PID)+1, inductance_max_min, sizeof(inductance_max_min));
   585   1      }
@@ -746,7 +746,7 @@ stmt  level    source
   644          // 函数简介     系统初始化函数，用于初始化所有外设和系统参数
   645          // 参数说明     void
   646          // 返回参数     void
-C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 12  
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:23:02  PAGE 12  
 
   647          // 使用示例     to_init();
   648          //-------------------------------------------------------------------------------------------------------

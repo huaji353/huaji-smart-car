@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_type                                                     11/06/25  16:16:32  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_type                                                     12/06/25  20:22:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_type
@@ -66,7 +66,7 @@ stmt  level    source
              -------------
    47          void set_wireless_type (wireless_type_enum type_set, uart_index_enum uartx, void *uart_callback)
    48          {
-C251 COMPILER V5.60.0,  zf_device_type                                                     11/06/25  16:16:32  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_type                                                     12/06/25  20:22:59  PAGE 2   
 
    49   1          wireless_type = type_set;
    50   1          

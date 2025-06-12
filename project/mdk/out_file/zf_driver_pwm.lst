@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      12/06/25  20:22:57  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_pwm
@@ -66,7 +66,7 @@ stmt  level    source
    52          const uint32 PWM_CCER_ADDR[] = {0x7efecc, 0x7efecd,   // PWMA_CCERX
    53                                          0x7efeec, 0x7efeed
    54                                         }; // PWMB_CCERX
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      12/06/25  20:22:57  PAGE 2   
 
    55          
    56          // 控制寄存器,高8位地址  低8位地址 + 1即可
@@ -134,7 +134,7 @@ stmt  level    source
   111   2              match_temp = period_temp + 1;               // duty为100%
   112   2        }
   113   1      
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      12/06/25  20:22:57  PAGE 3   
 
   114   1        PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);     // 设置预分频值
   115   1        PWMX_PSCRL(pin) = (uint8)freq_div;
@@ -202,7 +202,7 @@ stmt  level    source
   171   1        // 如果是这一行报错 那你得去看看最大占空比是限定的多少 占空比写入错误
   172   1          //zf_assert(PWM_DUTY_MAX >= duty);
   173   1        
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      12/06/25  20:22:57  PAGE 4   
 
   174   1          gpio_init(pin  & 0xFF, GPO, 1, GPO_PUSH_PULL);              // GPIO需要设置为推挽输出
   175   1          
@@ -271,7 +271,7 @@ Module Information          Static   Overlayable
   far data size        =    ------     ------
   huge data size       =    ------     ------
   const size           =    ------     ------
-C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      12/06/25  20:22:57  PAGE 5   
 
   hconst size          =        96     ------
 End of Module Information.

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_ips200
@@ -66,7 +66,7 @@ stmt  level    source
    52          #if IPS200_USE_SOFT_SPI
                static soft_spi_info_struct             ips200_spi;
                #define ips200_write_8bit_data(dat)    soft_spi_write_8bit(&ips200_spi, dat)
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 2   
 
                #define ips200_write_16bit_data(dat)   soft_spi_write_16bit(&ips200_spi, dat)
                #else
@@ -134,7 +134,7 @@ stmt  level    source
   111          {
   112   1          uint16 i, j;
   113   1          ips200_set_region(0, 0, ips200_x_max - 1, ips200_y_max - 1);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 3   
 
   114   1        
   115   1        for(i = 0; i < ips200_x_max; i ++)
@@ -202,7 +202,7 @@ stmt  level    source
   167          void ips200_draw_point (uint16 x,uint16 y,uint16 color)
   168          {
   169   1          //zf_assert(x < ips200_x_max);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 4   
 
   170   1          //zf_assert(y < ips200_y_max);
   171   1      
@@ -270,7 +270,7 @@ stmt  level    source
   227          
   228          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 5   
 
   229          //  @brief      液晶显示8位有符号
   230          // @param       x               坐标x方向的起点 参数范围 [0, ips200_x_max-1]
@@ -338,7 +338,7 @@ stmt  level    source
   289          
   290          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 6   
 
   291          // @brief       液晶显示16位有符号
   292          // @param       x               坐标x方向的起点 参数范围 [0, ips200_x_max-1]
@@ -406,7 +406,7 @@ stmt  level    source
   351   1          {
   352   2              ips200_show_char(x+(8*i),y,(uint8)('0' + a[i]));
   353   2              i++;
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 7   
 
   354   2          }
   355   1      }
@@ -474,7 +474,7 @@ stmt  level    source
              -------------
   410          // @brief       1.14寸 IPS液晶初始化
   411          // @return      void
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 8   
 
   412          // Sample usage:                ips200_init();
   413          //-------------------------------------------------------------------------------------------------------
@@ -542,7 +542,7 @@ stmt  level    source
   472   1      
   473   1          ips200_write_index(0xC6);
   474   1          ips200_write_8bit_data(0x0F);
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 9   
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 9   
 
   475   1      
   476   1          ips200_write_index(0xD0);
@@ -612,7 +612,7 @@ Module Information          Static   Overlayable
   hconst size          =        38     ------
 End of Module Information.
 
-C251 COMPILER V5.60.0,  zf_device_ips200                                                   11/06/25  16:16:32  PAGE 10  
+C251 COMPILER V5.60.0,  zf_device_ips200                                                   12/06/25  20:22:59  PAGE 10  
 
 
 C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

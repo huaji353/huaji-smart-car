@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 1   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_imu660ra
@@ -66,7 +66,7 @@ stmt  level    source
    47          *
    48          *                   // 软件 IIC 引脚
    49          *                   SCL/SPC           查看 zf_device_imu660ra.h 中 IMU660RA_SCL_PIN 宏定义
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 2   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 2   
 
    50          *                   SDA/DSI           查看 zf_device_imu660ra.h 中 IMU660RA_SDA_PIN 宏定义
    51          *                   VCC               3.3V电源
@@ -134,7 +134,7 @@ stmt  level    source
              -nfig_file));
   102          // 备注信息     内部调用
   103          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 3   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 3   
 
              -------------
   104          static void imu660ra_write_registers(uint8 reg, const uint8 *dat, uint32 len)
@@ -202,7 +202,7 @@ stmt  level    source
   160   1          uint8 dat = 0, return_state = 0;
   161   1          uint16 timeout_count = 0;
   162   1          
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 4   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 4   
 
   163   1          do
   164   1          {
@@ -270,7 +270,7 @@ stmt  level    source
   217          // 参数说明     void
   218          // 返回参数     uint8           1-初始化失败 0-初始化成功
   219          // 使用示例     imu660ra_init();
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 5   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 5   
 
   220          // 备注信息
   221          //-------------------------------------------------------------------------------------------------------
@@ -338,7 +338,7 @@ stmt  level    source
   270   2              // 设置为 0x01 加速度计量程为 ±4  g   获取到的加速度计数据除以 8192   可�
              -��转化为带物理单位的数据 单位 g(m/s^2)
   271   2              // 设置为 0x02 加速度计量程为 ±8  g   获取到的加速度计数据除以 4096   可�
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 6   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 6   
 
              -��转化为带物理单位的数据 单位 g(m/s^2)
   272   2              // 设置为 0x03 加速度计量程为 ±16 g   获取到的加速度计数据除以 2048   可�
@@ -406,7 +406,7 @@ stmt  level    source
   328   4                  }
   329   3                  break;
   330   3                  
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 7   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 7   
 
   331   3                  case IMU660RA_GYRO_SAMPLE_SGN_125DPS:
   332   3                  {
@@ -475,7 +475,7 @@ Module Information          Static   Overlayable
   huge data size       =    ------     ------
   const size           =    ------     ------
   hconst size          =       222     ------
-C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 11/06/25  16:16:33  PAGE 8   
+C251 COMPILER V5.60.0,  zf_device_imu660ra                                                 12/06/25  20:23:00  PAGE 8   
 
 End of Module Information.
 

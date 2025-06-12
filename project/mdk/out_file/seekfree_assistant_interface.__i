@@ -1,1 +1,0 @@
-"..\..\libraries\zf_components\seekfree_assistant_interface.c" LARGE NOALIAS WARNINGLEVEL (3) OPTIMIZE (1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\seekfree_assistant_interface.lst) TABS (2) OBJECT(.\out_file\seekfree_assistant_interface.obj)

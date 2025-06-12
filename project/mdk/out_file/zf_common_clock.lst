@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_common_clock                                                    11/06/25  16:16:26  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    12/06/25  20:22:51  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_clock
@@ -66,7 +66,7 @@ stmt  level    source
    52   1      
    53   1        // 外部晶振
    54   1          XOSCCR = 0xc0;          // 启动外部晶振
-C251 COMPILER V5.60.0,  zf_common_clock                                                    11/06/25  16:16:26  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    12/06/25  20:22:51  PAGE 2   
 
    55   1          while (!(XOSCCR & 1));  // 等待时钟稳定
    56   1          CLKDIV = 0x00;          // 时钟不分频
@@ -135,7 +135,7 @@ Module Information          Static   Overlayable
   ebitaddressable size =    ------     ------
   far data size        =    ------     ------
   huge data size       =    ------     ------
-C251 COMPILER V5.60.0,  zf_common_clock                                                    11/06/25  16:16:26  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_clock                                                    12/06/25  20:22:51  PAGE 3   
 
   const size           =    ------     ------
   hconst size          =         9     ------

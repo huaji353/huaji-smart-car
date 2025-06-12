@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 1   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE contrl
@@ -66,7 +66,7 @@ stmt  level    source
    54   1          // 角度环PID参数初始化 (位置式PID)
    55   1          PID_angle.kp        = PID_angle_P;
    56   1          PID_angle.ki        = PID_angle_I;
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 2   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 2   
 
    57   1          PID_angle.kd        = PID_angle_D;
    58   1          PID_angle.imax      = 3000;
@@ -134,7 +134,7 @@ stmt  level    source
   120           *************************************************************************/
   121          float PidLocCtrl(pid_param_t * pid, float error)
   122          {
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 3   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 3   
 
   123   1          /* 累积误差 */
   124   1          pid->integrator += error;
@@ -202,7 +202,7 @@ stmt  level    source
   181   1          inductance_horizontal_4_max = (inductance_horizontal_4 > inductance_horizontal_4_max) ? inductance_ho
              -rizontal_4 : inductance_horizontal_4_max;
   182   1          inductance_horizontal_1_min = (inductance_horizontal_1 < inductance_horizontal_1_min) ? inductance_ho
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 4   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 4   
 
              -rizontal_1 : inductance_horizontal_1_min;
   183   1          inductance_vertical_2_min = (inductance_vertical_2 < inductance_vertical_2_min) ? inductance_vertical
@@ -270,7 +270,7 @@ stmt  level    source
   242   1      
   243   1          // 防止除以零
   244   1          if (vertical_sum > 0) {
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 5   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 5   
 
   245   2              vertical_diff_ratio_sum = vertical_diff / vertical_sum;
   246   2          } else {
@@ -338,7 +338,7 @@ stmt  level    source
   308           *  参数说明：无
   309           *  函数返回：无
   310           *************************************************************************/
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 6   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 6   
 
   311          void speed_control_L(void)
   312          {
@@ -406,7 +406,7 @@ stmt  level    source
   374   1          // 当需要转向时，两轮输出差异将由各自的PID控制器产生
   375   1          // 此处可以进行额外的微调
   376   1          // if(angle_speed_output != 0) {
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 7   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 7   
 
   377   1          //     // 在各轮速度控制基础上增加角速度差分
   378   1          //     float steering_factor = 0.5f; // 转向系数，可根据需要调整
@@ -474,7 +474,7 @@ stmt  level    source
   440   1      //        ips200_show_string(10, 90, txt);
   441   1      //        
   442   1      //        sprintf(txt, "L Encoder: %05d", encoder_data_dir_1);
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 8   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 8   
 
   443   1      //        ips200_show_string(10, 110, txt);
   444   1      //        
@@ -542,7 +542,7 @@ stmt  level    source
   506   1          angle_speed_output=0;
   507   1          angle_output=0;
   508   1          speed_control();
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 9   
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 9   
 
   509   1          control_output();
   510   1      }
@@ -611,7 +611,7 @@ stmt  level    source
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 10  
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  20:23:04  PAGE 10  
 
   code size            =      4969     ------
   ecode size           =    ------     ------

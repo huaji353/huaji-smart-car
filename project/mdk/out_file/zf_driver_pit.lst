@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_pit                                                      11/06/25  16:16:30  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_pit                                                      12/06/25  20:22:56  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_pit
@@ -66,7 +66,7 @@ stmt  level    source
    50          void pit_init(pit_index_enum pit_n, uint32 period)
    51          {
    52   1        uint8 freq_div = 0;                
-C251 COMPILER V5.60.0,  zf_driver_pit                                                      11/06/25  16:16:30  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_pit                                                      12/06/25  20:22:56  PAGE 2   
 
    53   1          uint16 period_temp = 0;               
    54   1          uint16 temp = 0;
@@ -134,7 +134,7 @@ stmt  level    source
   116   1          
   117   1        
   118   1        freq_div = ((period) >> 15);                   // 计算预分频
-C251 COMPILER V5.60.0,  zf_driver_pit                                                      11/06/25  16:16:30  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_pit                                                      12/06/25  20:22:56  PAGE 3   
 
   119   1        period_temp = ((period) / (freq_div+1));       // 计算自动重装载值
   120   1      
@@ -203,7 +203,7 @@ Module Information          Static   Overlayable
   pdata size           =    ------     ------
   xdata size           =        11     ------
   xdata-const size     =    ------     ------
-C251 COMPILER V5.60.0,  zf_driver_pit                                                      11/06/25  16:16:30  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_pit                                                      12/06/25  20:22:56  PAGE 4   
 
   edata size           =    ------     ------
   bit size             =    ------     ------

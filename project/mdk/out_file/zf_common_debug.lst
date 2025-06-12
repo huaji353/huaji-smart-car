@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 1   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_common_debug
@@ -66,7 +66,7 @@ stmt  level    source
    51          
    52          //static debug_output_struct  debug_output_info;
    53          static volatile uint8       zf_debug_init_flag = 1;
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 2   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 2   
 
    54          static volatile uint8       zf_debug_assert_enable = 1;
    55          
@@ -134,7 +134,7 @@ stmt  level    source
   109          
   110          //    vuint16 i = 0, j = 0;
   111          //    vint16 len_origin = 0;
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 3   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 3   
 
   112          //    vuint16 show_len = 0;
   113          //    vint16 show_line_index = 0;
@@ -202,7 +202,7 @@ stmt  level    source
   175          //                    if(strlen(output_buffer) < (j + i * show_len))
   176          //                    {
   177          //                        break;
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 4   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 4   
 
   178          //                    }
   179          //                    file_path_buffer[j] = output_buffer[j + i * show_len];
@@ -270,7 +270,7 @@ stmt  level    source
   237          // 备注信息     本函数需要开启 DEBUG_UART_USE_INTERRUPT 宏定义才可使用
   238          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 5   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 5   
 
   239          uint32 debug_send_buffer(const uint8 *buff, uint32 len)
   240          {
@@ -338,7 +338,7 @@ stmt  level    source
   295          // 参数说明     void
   296          // 返回参数     void
   297          //  @since      v1.0
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 6   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 6   
 
   298          // 备注信息              重定向printf到DEBUG串口上
   299          //-------------------------------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ stmt  level    source
   353          //    {
   354          //       if(pass || !zf_debug_assert_enable)
   355          //       {
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 7   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 7   
 
   356          //           break;
   357          //       }
@@ -474,7 +474,7 @@ stmt  level    source
   418          ////-----------------------------------------------------------------------------------------------------
              ---------------
   419          //void debug_log_handler (uint8 pass, char *str, char *file, int line)
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 8   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 8   
 
   420          //{
   421          //  uint8 log_str[] = "Log message";
@@ -542,7 +542,7 @@ stmt  level    source
   479          //}
   480          
   481          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 9   
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 9   
 
              -------------
   482          // 函数简介      debug 串口初始化 此部分不允许用户更改
@@ -611,7 +611,7 @@ Module Information          Static   Overlayable
   idata size           =    ------     ------
   pdata size           =    ------     ------
   xdata size           =       108     ------
-C251 COMPILER V5.60.0,  zf_common_debug                                                    11/06/25  16:16:26  PAGE 10  
+C251 COMPILER V5.60.0,  zf_common_debug                                                    12/06/25  20:22:52  PAGE 10  
 
   xdata-const size     =    ------     ------
   edata size           =    ------     ------

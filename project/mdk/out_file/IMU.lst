@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 1   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE IMU
@@ -66,7 +66,7 @@ stmt  level    source
    52          // 返回参数     void
    53          // 使用示例     quaternion_init();
    54          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 2   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 2   
 
              -------------
    55          void quaternion_init(void) 
@@ -134,7 +134,7 @@ stmt  level    source
   113   2              /* 更新进度 */
   114   2              if(i % 10 == 0) 
   115   2              {
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 3   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 3   
 
   116   3                  sprintf(txt, "progress: %d%%", (int)(i * 100 / samples));
   117   3                  ips200_show_string(0, 40, txt);
@@ -202,7 +202,7 @@ stmt  level    source
   175   1          float qDot1, qDot2, qDot3, qDot4;
   176   1          
   177   1          /* 读取IMU传感器数据 */
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 4   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 4   
 
   178   1          imu660ra_get_gyro();
   179   1          
@@ -270,7 +270,7 @@ stmt  level    source
   237   1          cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
   238   1          euler.yaw = atan2(siny_cosp, cosy_cosp);
   239   1          
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 5   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 5   
 
   240   1          /* 转换为角度 */
   241   1          euler.yaw = euler.yaw * 180.0f / PI;
@@ -338,7 +338,7 @@ stmt  level    source
   295   1          encoder_integral_1=0;
   296   1          encoder_integral_2=0;
   297   1          // encoder_del=encoder_data_dir_1-encoder_data_dir_2;
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 6   
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 6   
 
   298   1          encoder_file[encoder_ins_num]=euler.yaw;
   299   1          encoder_ins_num++;

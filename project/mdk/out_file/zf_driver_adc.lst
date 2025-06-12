@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      12/06/25  20:22:54  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_adc
@@ -66,7 +66,7 @@ stmt  level    source
    50          //-------------------------------------------------------------------------------------------------------
              -------------
    51          uint16 adc_mean_filter_convert (adc_channel_enum ch, const uint8 count)
-C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      12/06/25  20:22:54  PAGE 2   
 
    52          {
    53   1          uint8 i;
@@ -134,7 +134,7 @@ stmt  level    source
   111   1          
   112   1          ADC_CONTR &= (0xF0);      //清除ADC_CHS[3:0] ： ADC 模拟通道选择位
   113   1          ADC_CONTR |= ch;
-C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      12/06/25  20:22:54  PAGE 3   
 
   114   1          
   115   1          if((ch >> 3) == 1) //P0.0

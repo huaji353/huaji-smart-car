@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 1   
+C251 COMPILER V5.60.0,  image                                                              12/06/25  20:23:04  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE image
@@ -66,7 +66,7 @@ stmt  level    source
    55   2             system_delay_ms(300);
    56   2      //        ips200_show_string(10, 70, "           ");
    57   2             
-C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 2   
+C251 COMPILER V5.60.0,  image                                                              12/06/25  20:23:04  PAGE 2   
 
    58   2             // 在中心点绘制起点标记
    59   2             ips200_draw_point(last_x, last_y, RGB565_BLUE);
@@ -134,7 +134,7 @@ stmt  level    source
   121   3                 for(i = 0; i <= steps; i++)
   122   3                 {
   123   4                     ips200_draw_point((uint16)x, (uint16)y, color);
-C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 3   
+C251 COMPILER V5.60.0,  image                                                              12/06/25  20:23:04  PAGE 3   
 
   124   4                     x += x_inc;
   125   4                     y += y_inc;

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   11/06/25  16:16:29  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   12/06/25  20:22:55  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_eeprom
@@ -66,7 +66,7 @@ stmt  level    source
    50   1          IAP_TRIG = 0xA5;                    //先送5AH，再送A5H到IAP触发寄存器，每次都需要如此
    51   1          //送完A5H后，IAP命令立即被触发启动
    52   1          //CPU等待IAP完成后，才会继续执行程序。
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   11/06/25  16:16:29  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   12/06/25  20:22:55  PAGE 2   
 
    53   1          _nop_();   //由于STC32G是多级流水线的指令系统，触发命令后建议加4个NOP，保证IAP_DATA的数据完成准备
    54   1          _nop_();
@@ -134,7 +134,7 @@ stmt  level    source
   108   1          IAP_TPS = write_time + 1;
   109   1      }
   110          
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   11/06/25  16:16:29  PAGE 3   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   12/06/25  20:22:55  PAGE 3   
 
   111          //-------------------------------------------------------------------------------------------------------
              -------------
@@ -202,7 +202,7 @@ stmt  level    source
   169          //  @param      len       需要读取的数据长度
   170          //  @return     void
   171          //  Sample usage:               uint8 str[10];
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   11/06/25  16:16:29  PAGE 4   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   12/06/25  20:22:55  PAGE 4   
 
   172          //                iap_read_bytes(0x00,str,10);
   173          //                将0x00-0x0A地址中的数据，读取到str中。
@@ -270,7 +270,7 @@ stmt  level    source
   230          
   231          //-------------------------------------------------------------------------------------------------------
              -------------
-C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   11/06/25  16:16:29  PAGE 5   
+C251 COMPILER V5.60.0,  zf_driver_eeprom                                                   12/06/25  20:22:55  PAGE 5   
 
   232          //  @brief      扩展EEPROM写多个字节(无需擦除)
   233          //  @param      addr      需要写的eeprom地址

@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  zf_driver_timer                                                    11/06/25  16:16:31  PAGE 1   
+C251 COMPILER V5.60.0,  zf_driver_timer                                                    12/06/25  20:22:58  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_timer
@@ -66,7 +66,7 @@ stmt  level    source
              -------------
    52          // 函数简介      TIMER 外设确认功能状态 库内部调用
    53          // 参数说明     index           TIMER 外设模块号
-C251 COMPILER V5.60.0,  zf_driver_timer                                                    11/06/25  16:16:31  PAGE 2   
+C251 COMPILER V5.60.0,  zf_driver_timer                                                    12/06/25  20:22:58  PAGE 2   
 
    54          // 参数说明     mode            需要确的功能模块
    55          // 返回参数     uint8           1-可以使用 0-不可以使用
