@@ -1,0 +1,130 @@
+C251 COMPILER V5.60.0,  main                                                               12/06/25  19:59:40  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE main
+OBJECT MODULE PLACED IN .\out_file\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\user\main.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROWSE I
+                    -NCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\use
+                    -r;..\code) DEBUG PRINT(.\out_file\main.lst) TABS(2) OBJECT(.\out_file\main.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源
+             -库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_common_headfile.h"
+   37          
+   38          void main()
+   39          {
+   40   1          clock_init(SYSTEM_CLOCK_40M);       // 务必保留
+   41   1          debug_init();               // 务必保留
+   42   1      
+   43   1          to_init();
+   44   1      
+   45   1          // 此处编写用户代码 例如外设初始化代码等
+   46   1          // 陀螺仪校准（收集200个样本）
+   47   1      
+   48   1      
+   49   1          while(1)
+   50   1          {
+   51   2          // 此处编写需要循环执行的代码
+C251 COMPILER V5.60.0,  main                                                               12/06/25  19:59:40  PAGE 2   
+
+   52   2          task_start(0);
+   53   3          menu_run();                         // 运行菜单系统
+   54   3          task_end(1);
+   55   2          // 显示实时VCC值
+   56   2          task_start(1);
+   57   3          task_delay(10);
+   58   3          display_vcc();
+   59   3          encoder_integrate();
+   60   3          //检测霍尔
+   61   3          // task_if(!gpio_get_level(HALL_PIN))
+   62   3          // {
+   63   3          //     buzzer_time(100);
+   64   3          // }
+   65   3      
+   66   3          task_end(1);
+   67   2          //开启逐飞传输
+   68   2          task_start(2);
+   69   3          task_delay(5);
+   70   3          seekfree_assistant_oscilloscope_code();
+   71   3          task_end(1);
+   72   2      
+   73   2          task_start(3);//按键判断
+   74   3          button_entry();
+   75   3          task_delay(1);
+   76   3          task_end(1);
+   77   2          //读取电感值
+   78   2          task_start(4);
+   79   3          adc_main_read();
+   80   3          // inductance_normalization_max();
+   81   3          inductance_difference_ratio_sum();
+   82   3          task_delay(5);
+   83   3          task_end(1);
+   84   2          }
+   85   1      }
+   86          
+   87          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       988     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =    ------     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =    ------     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

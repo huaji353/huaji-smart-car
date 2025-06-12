@@ -1,0 +1,386 @@
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_wireless_uart
+OBJECT MODULE PLACED IN .\out_file\zf_device_wireless_uart.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_wireless_uart.c LARGE NOALIAS FLOA
+                    -T64 WARNINGLEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\librari
+                    -es\zf_device;..\..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_device_wireless_uart.lst) TABS(2) OBJE
+                    -CT(.\out_file\zf_device_wireless_uart.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library ¼´£¨AI8051U ¿ªÔ´¿â£©ÊÇÒ»¸ö»ùÓÚ¹Ù·½ SDK ½Ó¿ÚµÄµÚÈý·½¿ªÔ´¿â
+    3          * Copyright (c) 2022 SEEKFREE Öð·É¿Æ¼¼
+    4          *
+    5          * ±¾ÎÄ¼þÊÇSTC ¿ªÔ´¿âµÄÒ»²¿·Ö
+    6          *
+    7          * AI8051U ¿ªÔ´¿â ÊÇÃâ·ÑÈí¼þ
+    8          * Äú¿ÉÒÔ¸ù¾Ý×ÔÓÉÈí¼þ»ù½ð»á·¢²¼µÄ GPL£¨GNU General Public License£¬¼´ GNUÍ¨ÓÃ¹«¹²Ðí¿ÉÖ¤£©µÄÌõ¿î
+    9          * ¼´ GPL µÄµÚ3°æ£¨¼´ GPL3.0£©»ò£¨ÄúÑ¡ÔñµÄ£©ÈÎºÎºóÀ´µÄ°æ±¾£¬ÖØÐÂ·¢²¼ºÍ/»òÐÞ¸ÄËü
+   10          *
+   11          * ±¾¿ªÔ´¿âµÄ·¢²¼ÊÇÏ£ÍûËüÄÜ·¢»Ó×÷ÓÃ£¬µ«²¢Î´¶ÔÆä×÷ÈÎºÎµÄ±£Ö¤
+   12          * ÉõÖÁÃ»ÓÐÒþº¬µÄÊÊÏúÐÔ»òÊÊºÏÌØ¶¨ÓÃÍ¾µÄ±£Ö¤
+   13          * ¸ü¶àÏ¸½ÚÇë²Î¼û GPL
+   14          *
+   15          * ÄúÓ¦¸ÃÔÚÊÕµ½±¾¿ªÔ´¿âµÄÍ¬Ê±ÊÕµ½Ò»·Ý GPL µÄ¸±±¾
+   16          * Èç¹ûÃ»ÓÐ£¬Çë²ÎÔÄ<https://www.gnu.org/licenses/>
+   17          *
+   18          * ¶îÍâ×¢Ã÷£º
+   19          * ±¾¿ªÔ´¿âÊ¹ÓÃ GPL3.0 ¿ªÔ´Ðí¿ÉÖ¤Ð­Òé ÒÔÉÏÐí¿ÉÉêÃ÷ÎªÒëÎÄ°æ±¾
+   20          * Ðí¿ÉÉêÃ÷Ó¢ÎÄ°æÔÚ libraries/doc ÎÄ¼þ¼ÐÏÂµÄ GPL3_permission_statement.txt ÎÄ¼þÖÐ
+   21          * Ðí¿ÉÖ¤¸±±¾ÔÚ libraries ÎÄ¼þ¼ÐÏÂ ¼´¸ÃÎÄ¼þ¼ÐÏÂµÄ LICENSE ÎÄ¼þ
+   22          * »¶Ó­¸÷Î»Ê¹ÓÃ²¢´«²¥±¾³ÌÐò µ«ÐÞ¸ÄÄÚÈÝÊ±±ØÐë±£ÁôÖð·É¿Æ¼¼µÄ°æÈ¨ÉùÃ÷£¨¼´±¾ÉùÃ÷£©
+   23          *
+   24          * ÎÄ¼þÃû³Æ          
+   25          * ¹«Ë¾Ãû³Æ          ³É¶¼Öð·É¿Æ¼¼ÓÐÏÞ¹«Ë¾
+   26          * °æ±¾ÐÅÏ¢          ²é¿´ libraries/doc ÎÄ¼þ¼ÐÄÚ version ÎÄ¼þ °æ±¾ËµÃ÷
+   27          * ¿ª·¢»·¾³          MDK FOR C251
+   28          * ÊÊÓÃÆ½Ì¨          AI8051U
+   29          * µêÆÌÁ´½Ó          https://seekfree.taobao.com/
+   30          *
+   31          * ÐÞ¸Ä¼ÇÂ¼
+   32          * ÈÕÆÚ              ×÷Õß           ±¸×¢
+   33          * 2024-08-01        ´óW            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          /********************************************************************************************************
+             -*************
+   36          * ½ÓÏß¶¨Òå£º
+   37          *                   ------------------------------------
+   38          *                   Ä£¿é¹Ü½Å            µ¥Æ¬»ú¹Ü½Å
+   39          *                   RX                  ²é¿´ zf_device_wireless_uart.h ÖÐ WIRELESS_UART_RX_PIN  ºê¶¨Òå
+   40          *                   TX                  ²é¿´ zf_device_wireless_uart.h ÖÐ WIRELESS_UART_TX_PIN  ºê¶¨Òå
+   41          *                   RTS                 ²é¿´ zf_device_wireless_uart.h ÖÐ WIRELESS_UART_RTS_PIN ºê¶¨Òå
+   42          *                   VCC                 3.3VµçÔ´
+   43          *                   GND                 µçÔ´µØ
+   44          *                   ÆäÓàÒý½ÅÐü¿Õ
+   45          *                   ------------------------------------
+   46          *********************************************************************************************************
+             -************/
+   47          
+   48          #include "zf_common_clock.h"
+   49          #include "zf_common_debug.h"
+   50          #include "zf_common_fifo.h"
+   51          #include "zf_driver_delay.h"
+   52          #include "zf_driver_gpio.h"
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 2   
+
+   53          #include "zf_driver_uart.h"
+   54          #include "zf_device_wireless_uart.h"
+   55          #include "zf_device_type.h"
+   56          
+   57          #pragma warning disable = 183
+   58          #pragma warning disable = 177
+   59          
+   60          
+   61          static  fifo_struct                                     wireless_uart_fifo;
+   62          static  uint8                                           wireless_uart_buffer[WIRELESS_UART_BUFFER_SIZE];
+   63          
+   64          //static          uint8                                   wireless_uart_data          = 0;
+   65          #if (1 == WIRELESS_UART_AUTO_BAUD_RATE)
+               static volatile wireless_uart_auto_baudrate_state_enum  wireless_auto_baud_flag     = WIRELESS_UART_AUTO_
+             -BAUD_RATE_INIT;
+               static volatile uint8                                   wireless_auto_baud_data[3]  = {0x00, 0x01, 0x03};
+               #endif
+   69          
+   70          //-------------------------------------------------------------------------------------------------------
+             -------------
+   71          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ·¢ËÍÊý¾Ý
+   72          // ²ÎÊýËµÃ÷     data            8bit Êý¾Ý
+   73          // ·µ»Ø²ÎÊý     uint32          Ê£Óà·¢ËÍ³¤¶È 0-·¢ËÍÍê±Ï 1-Î´·¢ËÍÍê³É
+   74          // Ê¹ÓÃÊ¾Àý     wireless_uart_send_byte(data);
+   75          // ±¸×¢ÐÅÏ¢
+   76          //-------------------------------------------------------------------------------------------------------
+             -------------
+   77          uint32 wireless_uart_send_byte (const uint8 dat)
+   78          {
+   79   1          uint16 time_count = WIRELESS_UART_TIMEOUT_COUNT;
+   80   1          
+   81   1          while(time_count)
+   82   1          {
+   83   2              if(!gpio_get_level(WIRELESS_UART_RTS_PIN))
+   84   2              {
+   85   3                  uart_write_byte(WIRELESS_UART_INDEX, dat);                         // ·¢ËÍÊý¾Ý
+   86   3                  break;
+   87   3              }
+   88   2              
+   89   2              time_count --;
+   90   2              system_delay_ms(1);
+   91   2          }
+   92   1          
+   93   1          return (0 == time_count);
+   94   1      }
+   95          
+   96          //-------------------------------------------------------------------------------------------------------
+             -------------
+   97          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ·¢ËÍÊý¾Ý¿é
+   98          // ²ÎÊýËµÃ÷     *buff           ·¢ËÍ»º³åÇø
+   99          // ²ÎÊýËµÃ÷     len             ·¢ËÍÊý¾Ý³¤¶È
+  100          // ·µ»Ø²ÎÊý     uint32          Ê£Óà·¢ËÍ³¤¶È
+  101          // Ê¹ÓÃÊ¾Àý     wireless_uart_send_buffer(buff, 64);
+  102          // ±¸×¢ÐÅÏ¢
+  103          //-------------------------------------------------------------------------------------------------------
+             -------------
+  104          uint32 wireless_uart_send_buffer (const uint8 *buff, uint32 len)
+  105          {
+  106   1          uint16 time_count = 0;
+  107   1          //zf_assert(NULL != buff);
+  108   1          
+  109   1          while(0 != len)
+  110   1          {
+  111   2              if(!gpio_get_level(WIRELESS_UART_RTS_PIN))                              // Èç¹ûRTSÎªµÍµçÆ½ Ôò¼ÌÐø
+             -·¢ËÍÊý¾Ý
+  112   2              {
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 3   
+
+  113   3                  if(30 <= len)                                                       // Êý¾Ý·Ö 30byte Ã¿°ü·¢ËÍ
+  114   3                  {
+  115   4                      uart_write_buffer(WIRELESS_UART_INDEX, buff, 30);               // ·¢ËÍÊý¾Ý
+  116   4                      buff += 30;                                                     // µØÖ·Æ«ÒÆ
+  117   4                      len -= 30;                                                      // ÊýÁ¿
+  118   4                      time_count = 0;
+  119   4                  }
+  120   3                  else                                                                // ²»×ã 30byte µÄÊý¾ÝÒ»´Î
+             -ÐÔ·¢ËÍÍê±Ï
+  121   3                  {
+  122   4                      uart_write_buffer(WIRELESS_UART_INDEX, buff, (uint16)len);              // ·¢ËÍÊý¾Ý
+  123   4                      len = 0;
+  124   4                      break;
+  125   4                  }
+  126   3              }
+  127   2              else                                                                    // Èç¹ûRTSÎª¸ßµçÆ½ ÔòÄ£¿é
+             -Ã¦
+  128   2              {
+  129   3                  if(WIRELESS_UART_TIMEOUT_COUNT <= (++ time_count))                  // ³¬³öÁË×î´óµÈ´ýÊ±¼ä
+  130   3                  {
+  131   4                      break;                                                          // ÍË³ö·¢ËÍ
+  132   4                  }
+  133   3                  
+  134   3                  system_delay_ms(1);
+  135   3              }
+  136   2          }
+  137   1          
+  138   1          return len;
+  139   1      }
+  140          
+  141          //-------------------------------------------------------------------------------------------------------
+             -------------
+  142          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ·¢ËÍ×Ö·û´®
+  143          // ²ÎÊýËµÃ÷     *str            Òª·¢ËÍµÄ×Ö·û´®µØÖ·
+  144          // ·µ»Ø²ÎÊý     uint32          Ê£Óà·¢ËÍ³¤¶È
+  145          // Ê¹ÓÃÊ¾Àý     wireless_uart_send_string("Believe in yourself.");
+  146          // ±¸×¢ÐÅÏ¢
+  147          //-------------------------------------------------------------------------------------------------------
+             -------------
+  148          uint32 wireless_uart_send_string (const char *str)
+  149          {
+  150   1          uint16 time_count = 0;
+  151   1          uint32 len = strlen(str);
+  152   1        uint8 temp[30] = {0};
+  153   1          //zf_assert(NULL != str);
+  154   1          
+  155   1          while(0 != len)
+  156   1          {
+  157   2              if(!gpio_get_level(WIRELESS_UART_RTS_PIN))                              // Èç¹ûRTSÎªµÍµçÆ½ Ôò¼ÌÐø
+             -·¢ËÍÊý¾Ý
+  158   2              {
+  159   3                  if(30 <= len)                                                       // Êý¾Ý·Ö 30byte Ã¿°ü·¢ËÍ
+  160   3                  {
+  161   4              memcpy(temp, str, 30);
+  162   4                      uart_write_buffer(WIRELESS_UART_INDEX, temp, 30); // ·¢ËÍÊý¾Ý
+  163   4                      str += 30;                                                      // µØÖ·Æ«ÒÆ
+  164   4                      len -= 30;                                                      // ÊýÁ¿
+  165   4                      time_count = 0;
+  166   4                  }
+  167   3                  else                                                                // ²»×ã 30byte µÄÊý¾ÝÒ»´Î
+             -ÐÔ·¢ËÍÍê±Ï
+  168   3                  {
+  169   4              memcpy(temp, str, (uint16)len);
+  170   4                      uart_write_buffer(WIRELESS_UART_INDEX, temp, (uint16)len);// ·¢ËÍÊý¾Ý
+  171   4                      len = 0;
+  172   4                      break;
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 4   
+
+  173   4                  }
+  174   3              }
+  175   2              else                                                                    // Èç¹ûRTSÎª¸ßµçÆ½ ÔòÄ£¿é
+             -Ã¦
+  176   2              {
+  177   3                  if(WIRELESS_UART_TIMEOUT_COUNT <= (++ time_count))                  // ³¬³öÁË×î´óµÈ´ýÊ±¼ä
+  178   3                  {
+  179   4                      break;                                                          // ÍË³ö·¢ËÍ
+  180   4                  }
+  181   3                  
+  182   3                  system_delay_ms(1);
+  183   3              }
+  184   2          }
+  185   1          
+  186   1          return len;
+  187   1      }
+  188          
+  189          
+  190          //-------------------------------------------------------------------------------------------------------
+             -------------
+  191          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ¶ÁÈ¡»º³å
+  192          // ²ÎÊýËµÃ÷     *buff           ½ÓÊÕ»º³åÇø
+  193          // ²ÎÊýËµÃ÷     len             ¶ÁÈ¡Êý¾Ý³¤¶È
+  194          // ·µ»Ø²ÎÊý     uint32          Êµ¼Ê¶ÁÈ¡Êý¾Ý³¤¶È
+  195          // Ê¹ÓÃÊ¾Àý     wireless_uart_read_buffer(buff, 32);
+  196          // ±¸×¢ÐÅÏ¢
+  197          //-------------------------------------------------------------------------------------------------------
+             -------------
+  198          uint32 wireless_uart_read_buffer (uint8 *buff, uint32 len)
+  199          {
+  200   1          uint32 data_len = len;
+  201   1          //zf_assert(NULL != buff);
+  202   1          fifo_read_buffer(&wireless_uart_fifo, buff, &data_len, FIFO_READ_AND_CLEAN);
+  203   1          return data_len;
+  204   1      }
+  205          
+  206          //-------------------------------------------------------------------------------------------------------
+             -------------
+  207          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ´®¿ÚÖÐ¶Ï»Øµ÷º¯Êý
+  208          // ²ÎÊýËµÃ÷     void
+  209          // ·µ»Ø²ÎÊý     void
+  210          // Ê¹ÓÃÊ¾Àý     wireless_uart_callback();
+  211          // ±¸×¢ÐÅÏ¢     ¸Ãº¯ÊýÔÚ ISR ÎÄ¼þ ´®¿ÚÖÐ¶Ï³ÌÐò±»µ÷ÓÃ
+  212          //              ÓÉ´®¿ÚÖÐ¶Ï·þÎñº¯Êýµ÷ÓÃ wireless_module_uart_handler() º¯Êý
+  213          //              ÔÙÓÉ wireless_module_uart_handler() º¯Êýµ÷ÓÃ±¾º¯Êý
+  214          //-------------------------------------------------------------------------------------------------------
+             -------------
+  215          void wireless_uart_callback (uint8 uart_dat)
+  216          {
+  217   1      //    uart_query_byte(WIRELESS_UART_INDEX, &uart_dat);
+  218   1          fifo_write_buffer(&wireless_uart_fifo, &uart_dat, 1);
+  219   1      #if WIRELESS_UART_AUTO_BAUD_RATE                                                // ¿ªÆô×Ô¶¯²¨ÌØÂÊ
+                   
+                   if(WIRELESS_UART_AUTO_BAUD_RATE_START == wireless_auto_baud_flag && 3 == fifo_used(&wireless_uart_fif
+             -o))
+                   {
+                       uint32 wireless_auto_baud_count = 3;
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK;
+                       fifo_read_buffer(&wireless_uart_fifo, (uint8 *)wireless_auto_baud_data, (uint32 *)&wireless_auto_
+             -baud_count, FIFO_READ_AND_CLEAN);
+                   }
+                   
+               #endif
+  229   1      }
+  230          
+  231          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 5   
+
+             -------------
+  232          // º¯Êý¼ò½é     ÎÞÏß×ª´®¿ÚÄ£¿é ³õÊ¼»¯
+  233          // ²ÎÊýËµÃ÷     void
+  234          // ·µ»Ø²ÎÊý     void
+  235          // Ê¹ÓÃÊ¾Àý     wireless_uart_init();
+  236          // ±¸×¢ÐÅÏ¢
+  237          //-------------------------------------------------------------------------------------------------------
+             -------------
+  238          uint8 wireless_uart_init (void)
+  239          {
+  240   1          uint8 return_state = 0;
+  241   1          set_wireless_type(WIRELESS_UART, WIRELESS_UART_INDEX, wireless_uart_callback);
+  242   1          
+  243   1          fifo_init(&wireless_uart_fifo, FIFO_DATA_8BIT, wireless_uart_buffer, WIRELESS_UART_BUFFER_SIZE);
+  244   1          gpio_init(WIRELESS_UART_RTS_PIN, GPIO, GPIO_HIGH, GPIO_NO_PULL);
+  245   1      #if(0 == WIRELESS_UART_AUTO_BAUD_RATE)                                          // ¹Ø±Õ×Ô¶¯²¨ÌØÂÊ
+  246   1          // ±¾º¯ÊýÊ¹ÓÃµÄ²¨ÌØÂÊÎª115200 ÎªÎÞÏß×ª´®¿ÚÄ£¿éµÄÄ¬ÈÏ²¨ÌØÂÊ ÈçÐèÆäËû²¨ÌØÂÊÇë×ÔÐÐÅäÖÃÄ£¿é²¢ÐÞ¸Ä´®¿ÚµÄ²¨
+             -ÌØÂÊ
+  247   1          uart_init (WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+             -   // ³õÊ¼»¯´®¿Ú
+  248   1          uart_rx_interrupt(WIRELESS_UART_INDEX, 1);
+  249   1      #elif(1 == WIRELESS_UART_AUTO_BAUD_RATE)                                        // ¿ªÆô×Ô¶¯²¨ÌØÂÊ
+                   uint8 rts_init_status = 0;
+                   uint16 time_count = 0;
+                   
+                   wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_INIT;
+                   wireless_auto_baud_data[0] = 0;
+                   wireless_auto_baud_data[1] = 1;
+                   wireless_auto_baud_data[2] = 3;
+                   
+                   rts_init_status = gpio_get_level(WIRELESS_UART_RTS_PIN);
+                   gpio_init(WIRELESS_UART_RTS_PIN, GPO, rts_init_status, GPO_PUSH_PULL);      // ³õÊ¼»¯Á÷¿ØÒý½Å
+                   
+                   uart_init (WIRELESS_UART_INDEX, WIRELESS_UART_BUAD_RATE, WIRELESS_UART_RX_PIN, WIRELESS_UART_TX_PIN);
+             -   // ³õÊ¼»¯´®¿Ú
+                   uart_rx_interrupt(WIRELESS_UART_INDEX, 1);
+                   
+                   system_delay_ms(5);                                                         // Ä£¿éÉÏµçÖ®ºóÐèÒªÑÓÊ±µÈ
+             -´ý
+                   gpio_set_level(WIRELESS_UART_RTS_PIN, !rts_init_status);                    // RTSÒý½ÅÀ­¸ß£¬½øÈë×Ô¶¯²
+             -¨ÌØÂÊÄ£Ê½
+                   system_delay_ms(100);                                                       // RTSÀ­¸ßÖ®ºó±ØÐëÑÓÊ±20m
+             -s
+                   gpio_toggle_level(WIRELESS_UART_RTS_PIN);                                   // RTSÒý½ÅÈ¡·´
+                   
+                   do
+                   {
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_START;
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[0]);       // ·¢ËÍÌØ¶¨Êý¾Ý ÓÃÓÚÄ£¿é×
+             -Ô¶¯ÅÐ¶Ï²¨ÌØÂÊ
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[1]);       // ·¢ËÍÌØ¶¨Êý¾Ý ÓÃÓÚÄ£¿é×
+             -Ô¶¯ÅÐ¶Ï²¨ÌØÂÊ
+                       uart_write_byte(WIRELESS_UART_INDEX, wireless_auto_baud_data[2]);       // ·¢ËÍÌØ¶¨Êý¾Ý ÓÃÓÚÄ£¿é×
+             -Ô¶¯ÅÐ¶Ï²¨ÌØÂÊ
+                       system_delay_ms(20);
+                       
+                       if(WIRELESS_UART_AUTO_BAUD_RATE_GET_ACK != wireless_auto_baud_flag)     // ¼ìÑé×Ô¶¯²¨ÌØÂÊÊÇ·ñÍê³É
+                       {
+                           return_state = 1;                                                   // Èç¹û³ÌÐò½øÈëµ½´ËÓï¾äÄÚ
+             - ËµÃ÷×Ô¶¯²¨ÌØÂÊÊ§°ÜÁË
+                           break;
+                       }
+                       
+                       time_count = 0;
+                       
+                       if( 0xa5 != wireless_auto_baud_data[0] &&                               // ¼ìÑé×Ô¶¯²¨ÌØÂÊÊÇ·ñÕýÈ·
+C251 COMPILER V5.60.0,  zf_device_wireless_uart                                            26/03/25  08:54:59  PAGE 6   
+
+                               0xff != wireless_auto_baud_data[1] &&                               // ¼ìÑé×Ô¶¯²¨ÌØÂÊÊÇ·ñ
+             -ÕýÈ·
+                               0xff != wireless_auto_baud_data[2] )                                // ¼ìÑé×Ô¶¯²¨ÌØÂÊÊÇ·ñ
+             -ÕýÈ·
+                       {
+                           return_state = 1;                                                   // Èç¹û³ÌÐò½øÈëµ½´ËÓï¾äÄÚ
+             - ËµÃ÷×Ô¶¯²¨ÌØÂÊÊ§°ÜÁË
+                           break;
+                       }
+                       
+                       wireless_auto_baud_flag = WIRELESS_UART_AUTO_BAUD_RATE_SUCCESS;
+                       
+                       gpio_init(WIRELESS_UART_RTS_PIN, GPI, 0, GPI_PULL_UP);                  // ³õÊ¼»¯Á÷¿ØÒý½Å
+                       system_delay_ms(10);                                                    // ÑÓÊ±µÈ´ý Ä£¿é×¼±¸¾ÍÐ÷
+                   }
+                   while(0);
+                   
+               #endif
+  301   1          return return_state;
+  302   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       933     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       154     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        30     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

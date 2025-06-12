@@ -1,0 +1,393 @@
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE IMU
+OBJECT MODULE PLACED IN .\out_file\IMU.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\IMU.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROWSE IN
+                    -CDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\user
+                    -;..\code) DEBUG PRINT(.\out_file\IMU.lst) TABS(2) OBJECT(.\out_file\IMU.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          
+    3          /* 全局变量定义 */
+    4          imu_data_t imu_data;                           /* IMU数据 */
+    5          Quaternion q = {1.0f, 0.0f, 0.0f, 0.0f};       /* 四元数，初始化为单位四元数 */
+    6          EulerAngle euler = {0.0f, 0.0f, 0.0f};         /* 欧拉角 */
+    7          float encoder_file[1000];
+    8          uint16 encoder_ins_num = 0;      /*ins总计数*/
+    9          uint8 ins_go_flag = 0;          /*ins发车位*/
+   10          uint8 encoder_ins_memory_flag=0; /*惯性导航存储标志位*/
+   11          #ifdef text_open
+   12          //-------------------------------------------------------------------------------------------------------
+             -------------
+   13          // 函数简介     IMU数据显示函数，用于在IPS屏幕上显示IMU的加速度和陀螺仪数据
+   14          // 参数说明     void
+   15          // 返回参数     void
+   16          // 使用示例     imu660ra_text();
+   17          //-------------------------------------------------------------------------------------------------------
+             -------------
+   18          void imu660ra_text(void)
+   19          {   
+   20   1          /* 获取IMU660RA数据 */
+   21   1          imu660ra_get_acc();
+   22   1          imu660ra_get_gyro();
+   23   1          /* 在IPS显示器上显示加速度数据 */
+   24   1          ips200_show_string(0, 16, "acc_x: ");
+   25   1          ips200_show_int16(60, 16, imu660ra_acc_x);
+   26   1          
+   27   1          ips200_show_string(0, 32, "acc_y: ");
+   28   1          ips200_show_int16(60, 32, imu660ra_acc_y);
+   29   1          
+   30   1          ips200_show_string(0, 48, "acc_z: ");
+   31   1          ips200_show_int16(60, 48, imu660ra_acc_z);
+   32   1          
+   33   1          /* 在IPS显示器上显示陀螺仪数据 */
+   34   1          ips200_show_string(0, 70, "IMU660RA Gyroscope:");
+   35   1          ips200_show_string(0, 86, "gyro_x: ");
+   36   1          ips200_show_int16(60, 86, imu660ra_gyro_x);
+   37   1          
+   38   1          ips200_show_string(0, 102, "gyro_y: ");
+   39   1          ips200_show_int16(60, 102, imu660ra_gyro_y);
+   40   1          
+   41   1          ips200_show_string(0, 118, "gyro_z: ");
+   42   1          ips200_show_int16(60, 118, imu660ra_gyro_z);
+   43   1          
+   44   1          /* 短暂延时，使显示更稳定 */
+   45   1          system_delay_ms(100);
+   46   1      }
+   47          #endif
+   48          
+   49          //-------------------------------------------------------------------------------------------------------
+             -------------
+   50          // 函数简介     四元数初始化函数，用于初始化四元数和陀螺仪偏置
+   51          // 参数说明     void
+   52          // 返回参数     void
+   53          // 使用示例     quaternion_init();
+   54          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 2   
+
+             -------------
+   55          void quaternion_init(void) 
+   56          {
+   57   1          /* 初始化为单位四元数 */
+   58   1          q.w = 1.0f;
+   59   1          q.x = 0.0f;
+   60   1          q.y = 0.0f;
+   61   1          q.z = 0.0f;
+   62   1          
+   63   1          /* 初始化陀螺仪偏置 */
+   64   1          imu_data.gyro_x = 0.0f;
+   65   1          imu_data.gyro_y = 0.0f;
+   66   1          imu_data.gyro_z = 0.0f;
+   67   1      }
+   68          
+   69          //-------------------------------------------------------------------------------------------------------
+             -------------
+   70          // 函数简介     角速度数据低通滤波函数，用于滤除小幅度噪声
+   71          // 参数说明     cy: 输入的角速度值
+   72          // 返回参数     float: 滤波后的角速度值
+   73          // 使用示例     filtered_gyro = IMU_lvbo(raw_gyro);
+   74          //-------------------------------------------------------------------------------------------------------
+             -------------
+   75          float IMU_lvbo(float cy)
+   76          {
+   77   1          if (cy < 0.15f && cy > -0.15f)
+   78   1          {
+   79   2              cy = 0.0f;
+   80   2          }
+   81   1          return cy;
+   82   1      }
+   83          
+   84          //-------------------------------------------------------------------------------------------------------
+             -------------
+   85          // 函数简介     陀螺仪校准函数，用于计算陀螺仪的零偏值
+   86          // 参数说明     samples: 采样点数
+   87          // 返回参数     void
+   88          // 使用示例     gyro_calibrate(200);
+   89          //-------------------------------------------------------------------------------------------------------
+             -------------
+   90          void gyro_calibrate(uint16 samples) 
+   91          {
+   92   1          uint16 i;
+   93   1          
+   94   1          /* 清除校准前的数据 */
+   95   1          imu_data.gyro_x = 0.0f;
+   96   1          imu_data.gyro_y = 0.0f;
+   97   1          imu_data.gyro_z = 0.0f;
+   98   1          
+   99   1          /* 清除屏幕，提示校准开始 */
+  100   1          ips200_clear(RGB565_WHITE);
+  101   1          ips200_show_string(0, 0, "imu gyro calibrate...");
+  102   1          ips200_show_string(0, 20, "please keep still");
+  103   1          
+  104   1          /* 收集多个样本求平均值 */
+  105   1          for(i = 0; i < samples; i++) 
+  106   1          {
+  107   2              imu660ra_get_gyro();
+  108   2              
+  109   2              imu_data.gyro_x += (float)imu660ra_gyro_x;
+  110   2              imu_data.gyro_y += (float)imu660ra_gyro_y;
+  111   2              imu_data.gyro_z += (float)imu660ra_gyro_z;
+  112   2              
+  113   2              /* 更新进度 */
+  114   2              if(i % 10 == 0) 
+  115   2              {
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 3   
+
+  116   3                  sprintf(txt, "progress: %d%%", (int)(i * 100 / samples));
+  117   3                  ips200_show_string(0, 40, txt);
+  118   3              }
+  119   2              
+  120   2              system_delay_ms(5);
+  121   2          }
+  122   1          
+  123   1          /* 计算偏置 */
+  124   1          imu_data.gyro_x = imu_data.gyro_x / (float)samples;
+  125   1          imu_data.gyro_y = imu_data.gyro_y / (float)samples;
+  126   1          imu_data.gyro_z = imu_data.gyro_z / (float)samples;
+  127   1          
+  128   1          /* 显示校准结果 */
+  129   1          sprintf(txt, "bias_x: %.2f", imu_data.gyro_x);
+  130   1          ips200_show_string(0, 60, txt);
+  131   1          sprintf(txt, "bias_y: %.2f", imu_data.gyro_y);
+  132   1          ips200_show_string(0, 80, txt);
+  133   1          sprintf(txt, "bias_z: %.2f", imu_data.gyro_z);
+  134   1          ips200_show_string(0, 100, txt);
+  135   1          
+  136   1          ips200_show_string(0, 120, "calibrate done!");
+  137   1          system_delay_ms(500);
+  138   1      }
+  139          
+  140          //-------------------------------------------------------------------------------------------------------
+             -------------
+  141          // 函数简介     四元数归一化函数，用于保持四元数的单位长度
+  142          // 参数说明     q: 指向待归一化的四元数的指针
+  143          // 返回参数     void
+  144          // 使用示例     quat_normalize(&q);
+  145          //-------------------------------------------------------------------------------------------------------
+             -------------
+  146          void quat_normalize(Quaternion* q)
+  147          {
+  148   1          float norm = sqrt(q->w*q->w + q->x*q->x + q->y*q->y + q->z*q->z);
+  149   1          
+  150   1          /* 防止除以零 */
+  151   1          if(norm < 0.0001f)
+  152   1          {
+  153   2              q->w = 1.0f;
+  154   2              q->x = 0.0f;
+  155   2              q->y = 0.0f;
+  156   2              q->z = 0.0f;
+  157   2              return;
+  158   2          }
+  159   1          
+  160   1          q->w = q->w / norm;
+  161   1          q->x = q->x / norm;
+  162   1          q->y = q->y / norm;
+  163   1          q->z = q->z / norm;
+  164   1      }
+  165          
+  166          //-------------------------------------------------------------------------------------------------------
+             -------------
+  167          // 函数简介     四元数更新函数，用于根据陀螺仪数据更新四元数
+  168          // 参数说明     void
+  169          // 返回参数     void
+  170          // 使用示例     quaternion_update();
+  171          //-------------------------------------------------------------------------------------------------------
+             -------------
+  172          void quaternion_update(void) 
+  173          {
+  174   1          float gx, gy, gz;
+  175   1          float qDot1, qDot2, qDot3, qDot4;
+  176   1          
+  177   1          /* 读取IMU传感器数据 */
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 4   
+
+  178   1          imu660ra_get_gyro();
+  179   1          
+  180   1          /* 处理陀螺仪数据，减去偏置并转换为弧度/秒 */
+  181   1          gx = imu660ra_gyro_transition((float)imu660ra_gyro_x - imu_data.gyro_x);
+  182   1          gy = imu660ra_gyro_transition((float)imu660ra_gyro_y - imu_data.gyro_y);
+  183   1          gz = imu660ra_gyro_transition((float)imu660ra_gyro_z - imu_data.gyro_z);
+  184   1          
+  185   1          /* 应用低通滤波 */
+  186   1          gx = IMU_lvbo(gx);
+  187   1          gy = IMU_lvbo(gy);
+  188   1          gz = IMU_lvbo(gz);
+  189   1          
+  190   1          /* 基于四元数微分方程进行积分更新 */
+  191   1          /* q_dot = 0.5 * q ⊗ ω，其中ω为角速度四元数[0,gx,gy,gz] */
+  192   1          qDot1 = 0.5f * (-q.x * gx - q.y * gy - q.z * gz);
+  193   1          qDot2 = 0.5f * (q.w * gx + q.y * gz - q.z * gy);
+  194   1          qDot3 = 0.5f * (q.w * gy - q.x * gz + q.z * gx);
+  195   1          qDot4 = 0.5f * (q.w * gz + q.x * gy - q.y * gx);
+  196   1          
+  197   1          /* 使用欧拉积分法更新四元数 */
+  198   1          q.w = q.w + qDot1 * SAMPLE_FREQ/4.8;
+  199   1          q.x = q.x + qDot2 * SAMPLE_FREQ/4.8;
+  200   1          q.y = q.y + qDot3 * SAMPLE_FREQ/4.8;
+  201   1          q.z = q.z + qDot4 * SAMPLE_FREQ/4.8;
+  202   1          
+  203   1          /* 四元数归一化 */
+  204   1          quat_normalize(&q);
+  205   1          
+  206   1          /* 计算欧拉角 */
+  207   1          euler = quaternion_to_euler(q);
+  208   1      }
+  209          
+  210          //-------------------------------------------------------------------------------------------------------
+             -------------
+  211          // 函数简介     获取当前四元数函数
+  212          // 参数说明     void
+  213          // 返回参数     Quaternion: 当前的四元数值
+  214          // 使用示例     Quaternion current_q = get_quaternion();
+  215          //-------------------------------------------------------------------------------------------------------
+             -------------
+  216          Quaternion get_quaternion(void) 
+  217          {
+  218   1          return q;
+  219   1      }
+  220          
+  221          //-------------------------------------------------------------------------------------------------------
+             -------------
+  222          // 函数简介     四元数转欧拉角函数，仅计算偏航角
+  223          // 参数说明     q: 输入的四元数
+  224          // 返回参数     EulerAngle: 计算得到的欧拉角（仅偏航角有效）
+  225          // 使用示例     EulerAngle angles = quaternion_to_euler(current_q);
+  226          //-------------------------------------------------------------------------------------------------------
+             -------------
+  227          EulerAngle quaternion_to_euler(Quaternion q) 
+  228          {
+  229   1          float siny_cosp, cosy_cosp;
+  230   1          
+  231   1          /* 初始化其他角度为0 */
+  232   1          euler.roll = 0.0f;
+  233   1          euler.pitch = 0.0f;
+  234   1          
+  235   1          /* 计算偏航角 (Yaw) */
+  236   1          siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+  237   1          cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+  238   1          euler.yaw = atan2(siny_cosp, cosy_cosp);
+  239   1          
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 5   
+
+  240   1          /* 转换为角度 */
+  241   1          euler.yaw = euler.yaw * 180.0f / PI;
+  242   1          
+  243   1          return euler;
+  244   1      }
+  245          
+  246          //-------------------------------------------------------------------------------------------------------
+             -------------
+  247          // 函数简介     四元数显示函数，用于在IPS屏幕上显示四元数和欧拉角
+  248          // 参数说明     void
+  249          // 返回参数     void
+  250          // 使用示例     quaternion_display();
+  251          //-------------------------------------------------------------------------------------------------------
+             -------------
+  252          void quaternion_display(void) 
+  253          {
+  254   1          /* 显示四元数 */
+  255   1          sprintf(txt, "Q.w: %.4f", q.w);
+  256   1          ips200_show_string(0, 0, txt);
+  257   1          sprintf(txt, "Q.x: %.4f", q.x);
+  258   1          ips200_show_string(0, 16, txt);
+  259   1          sprintf(txt, "Q.y: %.4f", q.y);
+  260   1          ips200_show_string(0, 32, txt);
+  261   1          sprintf(txt, "Q.z: %.4f", q.z);
+  262   1          ips200_show_string(0, 48, txt);
+  263   1          
+  264   1          /* 显示欧拉角 */
+  265   1          sprintf(txt, "Yaw  : %.2f", euler.yaw);
+  266   1          ips200_show_string(0, 112, txt);
+  267   1      }
+  268          
+  269          //-------------------------------------------------------------------------------------------------------
+             -------------
+  270          // 函数简介     IMU中断服务函数，用于处理IMU数据更新
+  271          // 参数说明     void
+  272          // 返回参数     void
+  273          // 使用示例     由定时器中断自动调用
+  274          //-------------------------------------------------------------------------------------------------------
+             -------------
+  275          void imu_isr(void)
+  276          {
+  277   1          /* 更新四元数 */
+  278   1          quaternion_update();
+  279   1      }
+  280          //-------------------------------------------------------------------------------------------------------
+             -------------
+  281          // 函数简介     简易惯性导航存入
+  282          // 参数说明     void
+  283          // 返回参数     void
+  284          // 使用示例     encoder_ins_infile();
+  285          //-------------------------------------------------------------------------------------------------------
+             -------------
+  286          void encoder_ins_infile(void) 
+  287          {
+  288   1          static uint8 encoder_ins_last_memory_flag=0;
+  289   1          encoder_integral_flag=1;
+  290   1          if(!encoder_ins_memory_flag){encoder_ins_last_memory_flag=0;return;}//存储开启标志
+  291   1          if(!encoder_ins_last_memory_flag){encoder_ins_num=0;encoder_ins_last_memory_flag=1;}//上一次比对
+             -判断是否第一次进入存储并归位
+  292   1          if(encoder_ins_num==0){encoder_file[encoder_ins_num]=euler.yaw;encoder_ins_num++;}//第一次存储�
+             -�接记录当前角度
+  293   1          if(encoder_ins_num==1000)return;
+  294   1          if(encoder_integral_1+encoder_integral_2<speed_threshold)return;//脉冲计数
+  295   1          encoder_integral_1=0;
+  296   1          encoder_integral_2=0;
+  297   1          // encoder_del=encoder_data_dir_1-encoder_data_dir_2;
+C251 COMPILER V5.60.0,  IMU                                                                12/06/25  19:59:42  PAGE 6   
+
+  298   1          encoder_file[encoder_ins_num]=euler.yaw;
+  299   1          encoder_ins_num++;
+  300   1      }
+  301          //-------------------------------------------------------------------------------------------------------
+             -------------
+  302          // 函数简介     简易惯性导航实现
+  303          // 参数说明     void
+  304          // 返回参数     void
+  305          // 使用示例     encoder_ins();
+  306          //-------------------------------------------------------------------------------------------------------
+             -------------
+  307          void encoder_ins(void)
+  308          {
+  309   1          static uint8 frist_in_flag;//第一次进入标志位
+  310   1          static uint16 encoder_ins_num_record;
+  311   1          if(!ins_go_flag){frist_in_flag=0;return;}
+  312   1          if(!frist_in_flag){encoder_ins_num_record=encoder_ins_num;encoder_ins_num=0;frist_in_flag=1;}//记录
+             -惯性存储的总数，并归位计数
+  313   1          target_speed=ins_speed;//总控速度
+  314   1          target_angle=encoder_file[encoder_ins_num];//总控角度
+  315   1          if(encoder_integral_1+encoder_integral_2>=speed_threshold){//计数更新
+  316   2              encoder_integral_1=0;
+  317   2              encoder_integral_2=0;
+  318   2              encoder_ins_num++;
+  319   2          }
+  320   1          if(encoder_ins_num>=encoder_ins_num_record){ins_go_flag=0;target_speed=0;return;}//停车
+  321   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      3424     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =      4124     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       296     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

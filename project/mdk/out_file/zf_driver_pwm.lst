@@ -1,0 +1,280 @@
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_pwm
+OBJECT MODULE PLACED IN .\out_file\zf_driver_pwm.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_pwm.c LARGE NOALIAS WARNINGLEVEL(3
+                    -) OPTIMIZE(1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..
+                    -\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_driver_pwm.lst) TABS(2) OBJECT(.\out_file\zf_driver_pwm.
+                    -obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library ¼´£¨AI8051U ¿ªÔ´¿â£©ÊÇÒ»¸ö»ùÓÚ¹Ù·½ SDK ½Ó¿ÚµÄµÚÈý·½¿ªÔ´¿â
+    3          * Copyright (c) 2022 SEEKFREE Öð·É¿Æ¼¼
+    4          *
+    5          * ±¾ÎÄ¼þÊÇSTC ¿ªÔ´¿âµÄÒ»²¿·Ö
+    6          *
+    7          * AI8051U ¿ªÔ´¿â ÊÇÃâ·ÑÈí¼þ
+    8          * Äú¿ÉÒÔ¸ù¾Ý×ÔÓÉÈí¼þ»ù½ð»á·¢²¼µÄ GPL£¨GNU General Public License£¬¼´ GNUÍ¨ÓÃ¹«¹²Ðí¿ÉÖ¤£©µÄÌõ¿î
+    9          * ¼´ GPL µÄµÚ3°æ£¨¼´ GPL3.0£©»ò£¨ÄúÑ¡ÔñµÄ£©ÈÎºÎºóÀ´µÄ°æ±¾£¬ÖØÐÂ·¢²¼ºÍ/»òÐÞ¸ÄËü
+   10          *
+   11          * ±¾¿ªÔ´¿âµÄ·¢²¼ÊÇÏ£ÍûËüÄÜ·¢»Ó×÷ÓÃ£¬µ«²¢Î´¶ÔÆä×÷ÈÎºÎµÄ±£Ö¤
+   12          * ÉõÖÁÃ»ÓÐÒþº¬µÄÊÊÏúÐÔ»òÊÊºÏÌØ¶¨ÓÃÍ¾µÄ±£Ö¤
+   13          * ¸ü¶àÏ¸½ÚÇë²Î¼û GPL
+   14          *
+   15          * ÄúÓ¦¸ÃÔÚÊÕµ½±¾¿ªÔ´¿âµÄÍ¬Ê±ÊÕµ½Ò»·Ý GPL µÄ¸±±¾
+   16          * Èç¹ûÃ»ÓÐ£¬Çë²ÎÔÄ<https://www.gnu.org/licenses/>
+   17          *
+   18          * ¶îÍâ×¢Ã÷£º
+   19          * ±¾¿ªÔ´¿âÊ¹ÓÃ GPL3.0 ¿ªÔ´Ðí¿ÉÖ¤Ð­Òé ÒÔÉÏÐí¿ÉÉêÃ÷ÎªÒëÎÄ°æ±¾
+   20          * Ðí¿ÉÉêÃ÷Ó¢ÎÄ°æÔÚ libraries/doc ÎÄ¼þ¼ÐÏÂµÄ GPL3_permission_statement.txt ÎÄ¼þÖÐ
+   21          * Ðí¿ÉÖ¤¸±±¾ÔÚ libraries ÎÄ¼þ¼ÐÏÂ ¼´¸ÃÎÄ¼þ¼ÐÏÂµÄ LICENSE ÎÄ¼þ
+   22          * »¶Ó­¸÷Î»Ê¹ÓÃ²¢´«²¥±¾³ÌÐò µ«ÐÞ¸ÄÄÚÈÝÊ±±ØÐë±£ÁôÖð·É¿Æ¼¼µÄ°æÈ¨ÉùÃ÷£¨¼´±¾ÉùÃ÷£©
+   23          *
+   24          * ÎÄ¼þÃû³Æ          
+   25          * ¹«Ë¾Ãû³Æ          ³É¶¼Öð·É¿Æ¼¼ÓÐÏÞ¹«Ë¾
+   26          * °æ±¾ÐÅÏ¢          ²é¿´ libraries/doc ÎÄ¼þ¼ÐÄÚ version ÎÄ¼þ °æ±¾ËµÃ÷
+   27          * ¿ª·¢»·¾³          MDK FOR C251
+   28          * ÊÊÓÃÆ½Ì¨          AI8051U
+   29          * µêÆÌÁ´½Ó          https://seekfree.taobao.com/
+   30          *
+   31          * ÐÞ¸Ä¼ÇÂ¼
+   32          * ÈÕÆÚ              ×÷Õß           ±¸×¢
+   33          * 2024-08-01        ´óW            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_common_clock.h"
+   37          #include "zf_common_debug.h"
+   38          
+   39          #include "zf_driver_pwm.h"
+   40          #include "zf_driver_gpio.h"
+   41          #include "zf_driver_uart.h"
+   42          
+   43          
+   44          
+   45          
+   46          // ²¶»ñ±È½ÏÄ£Ê½¼Ä´æÆ÷
+   47          const uint32 PWM_CCMR_ADDR[] = {0x7efec8, 0x7efec9, 0x7efeca, 0x7efecb,
+   48                                          0x7efee8, 0x7efee9, 0x7efeea, 0x7efeeb
+   49                                         };
+   50          
+   51          // ²¶»ñ±È½ÏÊ¹ÄÜ¼Ä´æÆ÷
+   52          const uint32 PWM_CCER_ADDR[] = {0x7efecc, 0x7efecd,   // PWMA_CCERX
+   53                                          0x7efeec, 0x7efeed
+   54                                         }; // PWMB_CCERX
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 2   
+
+   55          
+   56          // ¿ØÖÆ¼Ä´æÆ÷,¸ß8Î»µØÖ·  µÍ8Î»µØÖ· + 1¼´¿É
+   57          const uint32 PWM_CCR_ADDR[] = {0x7efed5, 0x7efed7, 0x7efed9, 0x7efedb,
+   58                                         0x7efef5, 0x7efef7, 0x7efef9, 0x7efefb
+   59                                        };
+   60          
+   61          // ¿ØÖÆ¼Ä´æÆ÷,¸ß8Î»µØÖ·  µÍ8Î»µØÖ· + 1¼´¿É
+   62          const uint32 PWM_ARR_ADDR[] = {0x7efed2, 0x7efef2};
+   63          
+   64          // Ô¤·ÖÆµ¼Ä´æÆ÷,¸ß8Î»µØÖ·  µÍ8Î»µØÖ· + 1¼´¿É
+   65          const uint32 PWM_PSCR_ADDR[] = {0x7efed0, 0x7efef0};
+   66          
+   67          
+   68          #define PWMX_CCERX(pin)   (*(unsigned char volatile far *)(PWM_CCER_ADDR[((pin >> 12 & 0x02) >> 1) + ((pin
+             - >> 15 & 0x1) * 2)]))
+   69          
+   70          #define PWMX_CCRXH(pin)   (*(unsigned char volatile far *)(PWM_CCR_ADDR[((pin >> 15 & 0x1) * 4) + (pin >> 
+             -12 & 0x7)]))
+   71          #define PWMX_CCRXL(pin)   (*(unsigned char volatile far *)(PWM_CCR_ADDR[((pin >> 15 & 0x1) * 4) + (pin >> 
+             -12 & 0x7)] + 1))
+   72          
+   73          #define PWMX_ARRH(pin)    (*(unsigned char volatile far *)(PWM_ARR_ADDR[(pin >> 15 & 0x1) * 1]))
+   74          #define PWMX_ARRL(pin)    (*(unsigned char volatile far *)(PWM_ARR_ADDR[(pin >> 15 & 0x1) * 1] + 1))
+   75          
+   76          #define PWMX_PSCRH(pin)   (*(unsigned char volatile far *)(PWM_PSCR_ADDR[(pin >> 15 & 0x1) * 1]))
+   77          #define PWMX_PSCRL(pin)   (*(unsigned char volatile far *)(PWM_PSCR_ADDR[(pin >> 15 & 0x1) * 1] + 1))
+   78          
+   79          #define PWMX_CCMRX(pin)   (*(unsigned char volatile far *)(PWM_CCMR_ADDR[((pin >> 15 & 0x1) * 4) + (pin >>
+             - 12 & 0x7)]))
+   80          
+   81          
+   82          //-------------------------------------------------------------------------------------------------------
+             -------------
+   83          // º¯Êý¼ò½é     PWMÆµÂÊºÍÕ¼¿Õ±ÈÉèÖÃ
+   84          // ²ÎÊýËµÃ÷     pin             PWMÍ¨µÀºÅ¼°Òý½Å
+   85          // ²ÎÊýËµÃ÷     freq            PWMÆµÂÊ
+   86          // ²ÎÊýËµÃ÷     duty              PWMÕ¼¿Õ±È
+   87          // ·µ»Ø²ÎÊý     void
+   88          // Ê¹ÓÃÊ¾Àý     pwm_set_freq(PWMB_CH1_P01, 50, 1000);   //PWMB Ê¹ÓÃÒý½ÅP01 ÆµÂÊ50HZ Õ¼¿Õ±ÈÎª°Ù·ÖÖ® 1000/P
+             -WM_DUTY_MAX*100
+   89          //                                          PWM_DUTY_MAXÔÚzf_driver_pwm.hÎÄ¼þÖÐ Ä¬ÈÏÎª10000
+   90          //-------------------------------------------------------------------------------------------------------
+             -------------
+   91          void pwm_set_freq(pwm_channel_enum pin, uint32 freq, uint32 duty)
+   92          {
+   93   1          uint32 match_temp = 0;
+   94   1          uint32 period_temp = 0;
+   95   1          uint16 freq_div = 0;
+   96   1        
+   97   1        // Èç¹ûÊÇÕâÒ»ÐÐ±¨´í ÄÇÄãµÃÈ¥¿´¿´×î´óÕ¼¿Õ±ÈÊÇÏÞ¶¨µÄ¶àÉÙ Õ¼¿Õ±ÈÐ´Èë´íÎó
+   98   1          //zf_assert(PWM_DUTY_MAX >= duty);
+   99   1        
+  100   1          //·ÖÆµ¼ÆËã£¬ÖÜÆÚ¼ÆËã£¬Õ¼¿Õ±È¼ÆËã
+  101   1          freq_div = (system_clock / freq) >> 16;               // ¶àÉÙ·ÖÆµ
+  102   1          period_temp = system_clock / freq;
+  103   1          period_temp = period_temp / (freq_div + 1) - 1;         // ÖÜÆÚ
+  104   1      
+  105   1          if(duty != PWM_DUTY_MAX)
+  106   1          {
+  107   2              match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);  // Õ¼¿Õ±È
+  108   2          }
+  109   1          else
+  110   1          {
+  111   2              match_temp = period_temp + 1;               // dutyÎª100%
+  112   2        }
+  113   1      
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 3   
+
+  114   1        PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);     // ÉèÖÃÔ¤·ÖÆµÖµ
+  115   1        PWMX_PSCRL(pin) = (uint8)freq_div;
+  116   1        
+  117   1        PWMX_ARRH(pin) = (uint8)(period_temp >> 8);   // ÖÜÆÚÖµ ¸ß8Î»
+  118   1        PWMX_ARRL(pin) = (uint8)period_temp;      // ÖÜÆÚÖµ µÍ8Î»
+  119   1      
+  120   1          PWMX_CCRXH(pin) = match_temp >> 8;        // ±È½ÏÖµ ¸ß8Î»
+  121   1          PWMX_CCRXL(pin) = (uint8)match_temp;      // ±È½ÏÖµ µÍ8Î»
+  122   1      }
+  123          
+  124          //-------------------------------------------------------------------------------------------------------
+             -------------
+  125          // º¯Êý¼ò½é     PWMÕ¼¿Õ±ÈÉè¶¨
+  126          // ²ÎÊýËµÃ÷     pwmch           PWMÍ¨µÀºÅ¼°Òý½Å
+  127          // ²ÎÊýËµÃ÷     duty            PWMÕ¼¿Õ±È
+  128          // ·µ»Ø²ÎÊý     void
+  129          // Ê¹ÓÃÊ¾Àý     pwm_set_duty(PWMB_CH1_P01, 5000);   //PWMB Ê¹ÓÃÒý½ÅP01 Õ¼¿Õ±ÈÎª°Ù·ÖÖ® 5000/PWM_DUTY_MAX*1
+             -00
+  130          //                                        PWM_DUTY_MAXÔÚzf_driver_pwm.hÎÄ¼þÖÐ Ä¬ÈÏÎª10000
+  131          //-------------------------------------------------------------------------------------------------------
+             -------------
+  132          void pwm_set_duty(pwm_channel_enum pin, uint32 duty)
+  133          {
+  134   1          uint32 match_temp;
+  135   1          uint32 arr = (PWMX_ARRH(pin) << 8) | PWMX_ARRL(pin);
+  136   1        
+  137   1        // Èç¹ûÊÇÕâÒ»ÐÐ±¨´í ÄÇÄãµÃÈ¥¿´¿´×î´óÕ¼¿Õ±ÈÊÇÏÞ¶¨µÄ¶àÉÙ Õ¼¿Õ±ÈÐ´Èë´íÎó
+  138   1          //zf_assert(PWM_DUTY_MAX >= duty);
+  139   1        
+  140   1          if(duty != PWM_DUTY_MAX)
+  141   1          {
+  142   2              match_temp = arr * ((float)duty / PWM_DUTY_MAX);        //Õ¼¿Õ±È
+  143   2          }
+  144   1          else
+  145   1          {
+  146   2              match_temp = arr + 1;
+  147   2          }
+  148   1      
+  149   1          //ÉèÖÃ²¶»ñÖµ|±È½ÏÖµ
+  150   1          PWMX_CCRXH(pin) = match_temp >> 8;        // ±È½ÏÖµ ¸ß8Î»
+  151   1          PWMX_CCRXL(pin) = (uint8)match_temp;      // ±È½ÏÖµ µÍ8Î»
+  152   1        
+  153   1      }
+  154          
+  155          //-------------------------------------------------------------------------------------------------------
+             -------------
+  156          // º¯Êý¼ò½é     PWM³õÊ¼»¯
+  157          // ²ÎÊýËµÃ÷     pin       PWMÍ¨µÀºÅ¼°Òý½Å
+  158          // ²ÎÊýËµÃ÷     freq            PWMÆµÂÊ
+  159          // ²ÎÊýËµÃ÷     duty            PWMÕ¼¿Õ±È
+  160          // ·µ»Ø²ÎÊý     void
+  161          // Ê¹ÓÃÊ¾Àý     pwm_init(PWMB_CH1_P01, 50, 5000);   //³õÊ¼»¯PWMB Ê¹ÓÃÒý½ÅP01  Êä³öPWMÆµÂÊ50HZ   Õ¼¿Õ±ÈÎª°
+             -Ù·ÖÖ® 5000/PWM_DUTY_MAX*100
+  162          //                                        PWM_DUTY_MAXÔÚzf_driver_pwm.hÎÄ¼þÖÐ Ä¬ÈÏÎª10000
+  163          //-------------------------------------------------------------------------------------------------------
+             -------------
+  164          void pwm_init(pwm_channel_enum pin, uint32 freq, uint32 duty)
+  165          {
+  166   1      
+  167   1          uint16 match_temp = 0;                                              // Õ¼¿Õ±ÈÖµ
+  168   1          uint32 period_temp = 0;                                             // ÖÜÆÚÖµ
+  169   1          uint16 freq_div = 0;                                                // ·ÖÆµÖµ
+  170   1          
+  171   1        // Èç¹ûÊÇÕâÒ»ÐÐ±¨´í ÄÇÄãµÃÈ¥¿´¿´×î´óÕ¼¿Õ±ÈÊÇÏÞ¶¨µÄ¶àÉÙ Õ¼¿Õ±ÈÐ´Èë´íÎó
+  172   1          //zf_assert(PWM_DUTY_MAX >= duty);
+  173   1        
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 4   
+
+  174   1          gpio_init(pin  & 0xFF, GPO, 1, GPO_PUSH_PULL);              // GPIOÐèÒªÉèÖÃÎªÍÆÍìÊä³ö
+  175   1          
+  176   1          
+  177   1          //·ÖÆµ¼ÆËã£¬ÖÜÆÚ¼ÆËã£¬Õ¼¿Õ±È¼ÆËã
+  178   1          freq_div = (system_clock / freq) >> 16;               // ·ÖÆµÖµ
+  179   1          period_temp = system_clock / freq;
+  180   1          period_temp = period_temp / (freq_div + 1) - 1;           // ÖÜÆÚÖµ
+  181   1        
+  182   1          if(duty != PWM_DUTY_MAX)
+  183   1          {   
+  184   2              match_temp = period_temp * ((float)duty / PWM_DUTY_MAX);    // Õ¼¿Õ±È
+  185   2          }
+  186   1          else
+  187   1          {
+  188   2              match_temp = period_temp + 1;                 // dutyÎª100%
+  189   2          }
+  190   1      
+  191   1        PWMX_PSCRH(pin) = (uint8)(freq_div >> 8);     // ÉèÖÃÔ¤·ÖÆµÖµ
+  192   1        PWMX_PSCRL(pin) = (uint8)freq_div;
+  193   1        
+  194   1        PWMX_ARRH(pin) = (uint8)(period_temp >> 8);   // ÖÜÆÚÖµ ¸ß8Î»
+  195   1        PWMX_ARRL(pin) = (uint8)period_temp;      // ÖÜÆÚÖµ µÍ8Î»
+  196   1      
+  197   1          PWMX_CCRXH(pin) = (uint8)(match_temp >> 8);   // ±È½ÏÖµ ¸ß8Î»
+  198   1          PWMX_CCRXL(pin) = (uint8)match_temp;      // ±È½ÏÖµ µÍ8Î»
+  199   1        
+  200   1          if(((pin >> 15) & 0x01) == 0)         // PWMA
+  201   1          {
+  202   2              PWMA_ENO |= 1 << ((((pin >> 12) & 0x07) * 2) + ((pin >> 11) & 0x01));   // Ê¹ÄÜÍ¨µÀ
+  203   2              PWMA_PS  |= ((pin >> 9) & 0x03) << (((pin >> 12) & 0x07) * 2);        // Ñ¡ÔñÒý½Å
+  204   2              PWMX_CCERX(pin) |= 1 << ((pin >> 12 & 0x01) * 4 + (pin >> 11 & 0x01) * 2);  // ÉèÖÃÊä³ö¼«ÐÔ
+  205   2      
+  206   2              PWMA_BKR = 0x80;              // Ö÷Êä³öÊ¹ÄÜ Ïàµ±ÓÚ×Ü¿ª¹Ø
+  207   2              PWMA_CR1 = 0x01;              // PWM¿ªÊ¼¼ÆÊý
+  208   2          }
+  209   1          else if(((pin >> 15) & 0x01) == 1)        // PWMB
+  210   1          {
+  211   2              PWMB_ENO |= 1 << ((((pin >> 12) & 0x07) * 2) + ((pin >> 11) & 0x01));   // Ê¹ÄÜÍ¨µÀ
+  212   2              PWMB_PS  |= ((pin >> 9) & 0x03) << (((pin >> 12) & 0x07) * 2);        // Ñ¡ÔñÒý½Å
+  213   2              PWMX_CCERX(pin) |= 1 << ((pin >> 12 & 0x01) * 4);             // ÉèÖÃÊä³ö¼«ÐÔ
+  214   2      
+  215   2              PWMB_BKR = 0x80;              // Ö÷Êä³öÊ¹ÄÜ Ïàµ±ÓÚ×Ü¿ª¹Ø
+  216   2              PWMB_CR1 = 0x01;              // PWM¿ªÊ¼¼ÆÊý
+  217   2          }
+  218   1      
+  219   1        PWMX_CCMRX(pin) |= 0x06 << 4;         // ÉèÖÃÎªPWMÄ£Ê½1
+  220   1        PWMX_CCMRX(pin) |= 1 << 3;            // ¿ªÆôPWM¼Ä´æÆ÷µÄÔ¤×°ÔØ¹¦
+  221   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      2443     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        52     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+C251 COMPILER V5.60.0,  zf_driver_pwm                                                      11/06/25  16:16:30  PAGE 5   
+
+  hconst size          =        96     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

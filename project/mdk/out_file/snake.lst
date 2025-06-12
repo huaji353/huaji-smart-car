@@ -1,0 +1,456 @@
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE snake
+OBJECT MODULE PLACED IN .\out_file\snake.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\snake.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(0,SIZE) BROWSE 
+                    -INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\us
+                    -er;..\code) DEBUG PRINT(.\out_file\snake.lst) TABS(2) OBJECT(.\out_file\snake.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          #include "snake.h"
+    3          
+    4          // 游戏区域定义
+    5          #define GAME_AREA_START_X  10
+    6          #define GAME_AREA_START_Y  40
+    7          #define GAME_AREA_WIDTH    180
+    8          #define GAME_AREA_HEIGHT   180
+    9          #define GRID_SIZE          8
+   10          
+   11          // 颜色定义
+   12          #define COLOR_SNAKE    RGB565_GREEN
+   13          #define COLOR_FOOD     RGB565_RED
+   14          #define COLOR_BORDER   RGB565_BLUE
+   15          #define COLOR_BG       RGB565_WHITE
+   16          #define COLOR_TEXT     RGB565_BLACK
+   17          
+   18          // 方向定义
+   19          #define DIR_UP      0
+   20          #define DIR_RIGHT   1
+   21          #define DIR_DOWN    2
+   22          #define DIR_LEFT    3
+   23          
+   24          // 游戏状态定�?
+   25          #define GAME_RUNNING  0
+   26          #define GAME_OVER     1
+   27          #define GAME_PAUSE    2
+   28          
+   29          // �?��蛇游戏结构体
+   30          typedef struct {
+   31              uint8 x[180];     // 蛇身体x坐标数组
+   32              uint8 y[180];     // 蛇身体y坐标数组
+   33              uint8 length;     // 蛇的长度
+   34              uint8 direction;  // 蛇的移动方向
+   35              uint8 food_x;     // 食物x坐标
+   36              uint8 food_y;     // 食物y坐标
+   37              uint16 score;     // 游戏得分
+   38              uint8 status;     // 游戏状�?
+   39          } snake_game_t;
+   40          
+   41          static snake_game_t snake_game;
+   42          static uint16 game_speed = 150; // 游戏速度(ms)
+   43          static uint32 last_time = 0;    // 上�?更新时间
+   44          static uint32 game_time = 0;    // 游戏时间计数�?
+   45          
+   46          // 函数声明
+   47          static void snake_game_init(void);
+   48          static void generate_food(void);
+   49          static void draw_border_line(uint16 x1, uint16 y1, uint16 x2, uint16 y2, uint16 color);
+   50          static void draw_game_area(void);
+   51          static void fill_grid(uint16 x, uint16 y, uint16 color);
+   52          static void draw_snake(void);
+   53          static void draw_food(void);
+   54          static void erase_tail(void);
+   55          static void move_snake(void);
+   56          static uint8 check_collision(void);
+   57          static void show_game_over(void);
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 2   
+
+   58          static void show_game_info(void);
+   59          
+   60          // 初�?化游�?
+   61          static void snake_game_init(void)
+   62          {
+   63   1          uint8 i;
+   64   1          
+   65   1          // 初�?化蛇
+   66   1          snake_game.length = 3;
+   67   1          snake_game.direction = DIR_RIGHT;
+   68   1          
+   69   1          // 初�?蛇身位置 (�?��位置)
+   70   1          for (i = 0; i < snake_game.length; i++) {
+   71   2              snake_game.x[i] = GAME_AREA_WIDTH / (2 * GRID_SIZE) - i;
+   72   2              snake_game.y[i] = GAME_AREA_HEIGHT / (2 * GRID_SIZE);
+   73   2          }
+   74   1          
+   75   1          // 初�?化得�?
+   76   1          snake_game.score = 0;
+   77   1          snake_game.status = GAME_RUNNING;
+   78   1          
+   79   1          // 生成�?���??�?
+   80   1          snake_game.food_x = rand() % (GAME_AREA_WIDTH / GRID_SIZE);
+   81   1          snake_game.food_y = rand() % (GAME_AREA_HEIGHT / GRID_SIZE);
+   82   1      }
+   83          
+   84          // 生成新的食物
+   85          static void generate_food(void)
+   86          {
+   87   1          uint8 overlapping;
+   88   1          uint8 i;
+   89   1          
+   90   1          do {
+   91   2              // 随机生成食物位置
+   92   2              snake_game.food_x = rand() % (GAME_AREA_WIDTH / GRID_SIZE);
+   93   2              snake_game.food_y = rand() % (GAME_AREA_HEIGHT / GRID_SIZE);
+   94   2              
+   95   2              // 检查是否与蛇身重叠
+   96   2              overlapping = 0;
+   97   2              for (i = 0; i < snake_game.length; i++) {
+   98   3                  if (snake_game.x[i] == snake_game.food_x && 
+   99   3                      snake_game.y[i] == snake_game.food_y) {
+  100   4                      overlapping = 1;
+  101   4                      break;
+  102   4                  }
+  103   3              }
+  104   2          } while (overlapping);
+  105   1      }
+  106          
+  107          // 绘制边�?�?
+  108          static void draw_border_line(uint16 x1, uint16 y1, uint16 x2, uint16 y2, uint16 color)
+  109          {
+  110   1          uint16 i;
+  111   1          if (x1 == x2) {  // 垂直�?
+  112   2              for (i = y1; i <= y2; i++) {
+  113   3                  ips200_draw_point(x1, i, color);
+  114   3              }
+  115   2          } else if (y1 == y2) {  // 水平�?
+  116   2              for (i = x1; i <= x2; i++) {
+  117   3                  ips200_draw_point(i, y1, color);
+  118   3              }
+  119   2          }
+  120   1      }
+  121          
+  122          // 绘制游戏区域
+  123          static void draw_game_area(void)
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 3   
+
+  124          {
+  125   1          uint16 i;
+  126   1          uint16 j;
+  127   1          
+  128   1          // 绘制边�?
+  129   1          draw_border_line(GAME_AREA_START_X - 1, GAME_AREA_START_Y - 1, 
+  130   1                          GAME_AREA_START_X + GAME_AREA_WIDTH + 1, GAME_AREA_START_Y - 1, COLOR_BORDER);  // �
+             -�边�?
+  131   1          
+  132   1          draw_border_line(GAME_AREA_START_X - 1, GAME_AREA_START_Y + GAME_AREA_HEIGHT + 1, 
+  133   1                          GAME_AREA_START_X + GAME_AREA_WIDTH + 1, GAME_AREA_START_Y + GAME_AREA_HEIGHT + 1, CO
+             -LOR_BORDER);  // 下边�?
+  134   1          
+  135   1          draw_border_line(GAME_AREA_START_X - 1, GAME_AREA_START_Y - 1, 
+  136   1                          GAME_AREA_START_X - 1, GAME_AREA_START_Y + GAME_AREA_HEIGHT + 1, COLOR_BORDER);  // �
+             -��边�?
+  137   1          
+  138   1          draw_border_line(GAME_AREA_START_X + GAME_AREA_WIDTH + 1, GAME_AREA_START_Y - 1, 
+  139   1                          GAME_AREA_START_X + GAME_AREA_WIDTH + 1, GAME_AREA_START_Y + GAME_AREA_HEIGHT + 1, CO
+             -LOR_BORDER);  // 右边�?
+  140   1          
+  141   1          // 清空游戏区域
+  142   1          for (i = GAME_AREA_START_X; i <= GAME_AREA_START_X + GAME_AREA_WIDTH; i++) {
+  143   2              for (j = GAME_AREA_START_Y; j <= GAME_AREA_START_Y + GAME_AREA_HEIGHT; j++) {
+  144   3                  ips200_draw_point(i, j, COLOR_BG);
+  145   3              }
+  146   2          }
+  147   1      }
+  148          
+  149          // �?��一�?���?
+  150          static void fill_grid(uint16 x, uint16 y, uint16 color)
+  151          {
+  152   1          uint16 real_x = GAME_AREA_START_X + (x * GRID_SIZE);
+  153   1          uint16 real_y = GAME_AREA_START_Y + (y * GRID_SIZE);
+  154   1          uint16 i;
+  155   1          uint16 j;
+  156   1          
+  157   1          for (i = 0; i < GRID_SIZE; i++) {
+  158   2              for (j = 0; j < GRID_SIZE; j++) {
+  159   3                  ips200_draw_point(real_x + i, real_y + j, color);
+  160   3              }
+  161   2          }
+  162   1      }
+  163          
+  164          // 绘制�?
+  165          static void draw_snake(void)
+  166          {
+  167   1          uint8 i;
+  168   1          
+  169   1          for (i = 0; i < snake_game.length; i++) {
+  170   2              fill_grid(snake_game.x[i], snake_game.y[i], COLOR_SNAKE);
+  171   2          }
+  172   1      }
+  173          
+  174          // 绘制食物
+  175          static void draw_food(void)
+  176          {
+  177   1          fill_grid(snake_game.food_x, snake_game.food_y, COLOR_FOOD);
+  178   1      }
+  179          
+  180          // 擦除蛇尾
+  181          static void erase_tail(void)
+  182          {
+  183   1          fill_grid(snake_game.x[snake_game.length-1], snake_game.y[snake_game.length-1], COLOR_BG);
+  184   1      }
+  185          
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 4   
+
+  186          // 移动�?
+  187          static void move_snake(void)
+  188          {
+  189   1          uint8 i;
+  190   1          uint8 new_x = snake_game.x[0];
+  191   1          uint8 new_y = snake_game.y[0];
+  192   1          
+  193   1          // 根据方向更新头部位置
+  194   1          switch (snake_game.direction) {
+  195   2              case DIR_UP:
+  196   2                  new_y--;
+  197   2                  break;
+  198   2              case DIR_RIGHT:
+  199   2                  new_x++;
+  200   2                  break;
+  201   2              case DIR_DOWN:
+  202   2                  new_y++;
+  203   2                  break;
+  204   2              case DIR_LEFT:
+  205   2                  new_x--;
+  206   2                  break;
+  207   2          }
+  208   1          
+  209   1          // 检查是否吃到�?�?
+  210   1          if (new_x == snake_game.food_x && new_y == snake_game.food_y) {
+  211   2              // 增加分数
+  212   2              snake_game.score += 10;
+  213   2              // 增加蛇的长度
+  214   2              snake_game.length++;
+  215   2              // 生成新�?�?
+  216   2              generate_food();
+  217   2              // 减少游戏速度 (提高难度)
+  218   2              if (game_speed > 50) {
+  219   3                  game_speed -= 5;
+  220   3              }
+  221   2              
+  222   2              // 移动蛇身，保持尾部位�?���?
+  223   2              for (i = snake_game.length - 1; i > 0; i--) {
+  224   3                  snake_game.x[i] = snake_game.x[i-1];
+  225   3                  snake_game.y[i] = snake_game.y[i-1];
+  226   3              }
+  227   2          } else {
+  228   2              // 移动蛇身 (除头部�?)
+  229   2              for (i = snake_game.length - 1; i > 0; i--) {
+  230   3                  snake_game.x[i] = snake_game.x[i-1];
+  231   3                  snake_game.y[i] = snake_game.y[i-1];
+  232   3              }
+  233   2          }
+  234   1          
+  235   1          // 更新蛇头位置
+  236   1          snake_game.x[0] = new_x;
+  237   1          snake_game.y[0] = new_y;
+  238   1      }
+  239          
+  240          // 检查�?�?
+  241          static uint8 check_collision(void)
+  242          {
+  243   1          uint8 i;
+  244   1          
+  245   1          // 检查是否撞到边�?
+  246   1          if (snake_game.x[0] >= GAME_AREA_WIDTH / GRID_SIZE || 
+  247   1              snake_game.y[0] >= GAME_AREA_HEIGHT / GRID_SIZE ||
+  248   1              snake_game.x[0] < 0 ||
+  249   1              snake_game.y[0] < 0) {
+  250   2              return 1;
+  251   2          }
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 5   
+
+  252   1          
+  253   1          // 检查是否撞到自己的�?��
+  254   1          for (i = 1; i < snake_game.length; i++) {
+  255   2              if (snake_game.x[0] == snake_game.x[i] && 
+  256   2                  snake_game.y[0] == snake_game.y[i]) {
+  257   3                  return 1;
+  258   3              }
+  259   2          }
+  260   1          
+  261   1          return 0;
+  262   1      }
+  263          
+  264          // 显示游戏结束
+  265          static void show_game_over(void)
+  266          {
+  267   1          // 清除屏幕并显示游戏结束消�?
+  268   1          ips200_clear(COLOR_BG);
+  269   1          ips200_show_string(80, 100, "GAME OVER");
+  270   1          
+  271   1          // 显示最终得�?
+  272   1          ips200_show_string(80, 120, "Score:");
+  273   1          ips200_show_uint16(140, 120, snake_game.score);
+  274   1          
+  275   1          // 显示按键提示
+  276   1          ips200_show_string(60, 160, "Press 5 to restart");
+  277   1          ips200_show_string(60, 180, "Press 6 to exit");
+  278   1          
+  279   1          system_delay_ms(1000); // 防�?按键消抖
+  280   1      }
+  281          
+  282          // 显示游戏界面信息
+  283          static void show_game_info(void)
+  284          {
+  285   1          // 显示分数
+  286   1          ips200_show_string(10, 5, "Score:");
+  287   1          ips200_show_uint16(60, 5, snake_game.score);
+  288   1          
+  289   1          // 显示速度
+  290   1          ips200_show_string(120, 5, "Speed:");
+  291   1          ips200_show_uint16(170, 5, 200 - game_speed);
+  292   1      }
+  293          
+  294          // �?��蛇游戏主函数
+  295          void function_snake(void)
+  296          {
+  297   1          
+  298   1          // 初�?化游�?
+  299   1          ips200_clear(COLOR_BG);
+  300   1          
+  301   1          // 显示游戏标�?
+  302   1          ips200_show_string(50, 120, "SNAKE GAME");
+  303   1          ips200_show_string(30, 150, "Press any key to start");
+  304   1          
+  305   1          // 等待按键开始游�?
+  306   1          while(1) {
+  307   2              button_entry();
+  308   2              if (button1 || button2 || button3 || button4 || button5) {
+  309   3                  break;
+  310   3              }
+  311   2              system_delay_ms(10);
+  312   2          }
+  313   1          
+  314   1          // 清除按键状�?
+  315   1          button1 = 0; button2 = 0; button3 = 0; button4 = 0; button5 = 0;
+  316   1          
+  317   1          // 初�?化游�?
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 6   
+
+  318   1          ips200_clear(COLOR_BG);
+  319   1          snake_game_init();
+  320   1          draw_game_area();
+  321   1          draw_food();
+  322   1          draw_snake();
+  323   1          
+  324   1          // 游戏主循�?
+  325   1          game_time = 0;
+  326   1          while (1) {
+  327   2              // 处理按键输入
+  328   2              button_entry();
+  329   2              
+  330   2              // 处理方向控制
+  331   2              if (button4 && snake_game.direction != DIR_DOWN) {  // 上键
+  332   3                  snake_game.direction = DIR_UP;
+  333   3              }
+  334   2              if (button3 && snake_game.direction != DIR_UP) {    // 下键
+  335   3                  snake_game.direction = DIR_DOWN;
+  336   3              }
+  337   2              if (button1 && snake_game.direction != DIR_RIGHT) { // 左键
+  338   3                  snake_game.direction = DIR_LEFT;
+  339   3              }
+  340   2              if (button2 && snake_game.direction != DIR_LEFT) {  // 右键
+  341   3                  snake_game.direction = DIR_RIGHT;
+  342   3              }
+  343   2              
+  344   2              // 暂停/继续
+  345   2              if (button5) {
+  346   3                  if (snake_game.status == GAME_RUNNING) {
+  347   4                      snake_game.status = GAME_PAUSE;
+  348   4                      ips200_show_string(80, 120, "PAUSED");
+  349   4                      ips200_show_string(40, 140, "Press 5 to continue");
+  350   4                  } else if (snake_game.status == GAME_PAUSE) {
+  351   4                      snake_game.status = GAME_RUNNING;
+  352   4                      // 擦除暂停信息
+  353   4                      ips200_clear(COLOR_BG);
+  354   4                      draw_game_area();
+  355   4                  }
+  356   3                  button5 = 0;  // 清除按键状�?
+  357   3              }
+  358   2              
+  359   2              // �?��在游戏运行状态下才更�?
+  360   2              if (snake_game.status == GAME_RUNNING) {
+  361   3                  // 增加游戏时间计数�?
+  362   3                  game_time++;
+  363   3                  
+  364   3                  // 控制游戏速度
+  365   3                  if (game_time >= game_speed / 10) {
+  366   4                      game_time = 0;
+  367   4                      
+  368   4                      // 更新游戏状�?
+  369   4                      erase_tail();  // 擦除蛇尾
+  370   4                      move_snake();  // 移动�?
+  371   4                      
+  372   4                      // 检查�?�?
+  373   4                      if (check_collision()) {
+  374   5                          snake_game.status = GAME_OVER;
+  375   5                          show_game_over();
+  376   5                          
+  377   5                          // 等待按键选择
+  378   5                          while (1) {
+  379   6                              button_entry();
+  380   6                              if (button5) {  // 重新开�?
+  381   7                                  ips200_clear(COLOR_BG);
+  382   7                                  snake_game_init();
+  383   7                                  draw_game_area();
+C251 COMPILER V5.60.0,  snake                                                              15/04/25  11:56:12  PAGE 7   
+
+  384   7                                  draw_food();
+  385   7                                  draw_snake();
+  386   7                                  button5 = 0;
+  387   7                                  break;
+  388   7                              }
+  389   6                              system_delay_ms(10);
+  390   6                          }
+  391   5                      } else {
+  392   5                          // 绘制蛇和食物
+  393   5                          draw_snake();
+  394   5                          draw_food();
+  395   5                      }
+  396   4                  }
+  397   3              }
+  398   2              
+  399   2              // 显示游戏信息
+  400   2              show_game_info();
+  401   2              
+  402   2              // �?��延时
+  403   2              system_delay_ms(10);
+  404   2          }
+  405   1      } 
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      2340     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       415     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       145     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

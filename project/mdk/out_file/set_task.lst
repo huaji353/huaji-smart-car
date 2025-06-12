@@ -1,0 +1,48 @@
+C251 COMPILER V5.60.0,  set_task                                                           11/06/25  16:16:36  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE set_task
+OBJECT MODULE PLACED IN .\out_file\set_task.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\set_task.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROW
+                    -SE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..
+                    -\user;..\code) DEBUG PRINT(.\out_file\set_task.lst) TABS(2) OBJECT(.\out_file\set_task.obj) 
+
+stmt  level    source
+
+    1          #include "set_task.h"
+    2          
+    3          char _this_task = 0;//当前运行的任务全局标志
+    4          char _task_for_cnt = 0;//使用task_for时所需的临时变量
+    5          _task user_task[Task_Max_Num] = {0};//每个协程的运行记忆变量
+    6          
+    7          //函数说明：用于设定软定时器的时间基准，需要每隔1ms(推荐时间)调用一次
+    8          void set_task_mode(void)
+    9          {
+   10   1        char task_num;//临时变量
+   11   1        for(task_num = 0; task_num < Task_Max_Num; task_num++)//遍历所有的软定时器
+   12   1          if(user_task[task_num].time > 0)user_task[task_num].time--;//需要自减的减1
+   13   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =        92     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        63     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        77     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,1 @@
+"..\user\main.c" LARGE NOALIAS WARNINGLEVEL (3) OPTIMIZE (1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\main.lst) TABS (2) OBJECT(.\out_file\main.obj)

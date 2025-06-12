@@ -1,0 +1,114 @@
+C251 COMPILER V5.60.0,  zf_device_type                                                     11/06/25  16:16:32  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_type
+OBJECT MODULE PLACED IN .\out_file\zf_device_type.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_type.c LARGE NOALIAS WARNINGLEVEL(
+                    -3) OPTIMIZE(1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\.
+                    -.\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_device_type.lst) TABS(2) OBJECT(.\out_file\zf_device_ty
+                    -pe.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源
+             -库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_device_type.h"
+   37          
+   38          wireless_type_enum  wireless_type = NO_WIRELESS;
+   39          //-------------------------------------------------------------------------------------------------------
+             -------------
+   40          // 函数简介     设置无线模块类型
+   41          // 参数说明     type_set        选定的无线模块类型
+   42          // 参数说明     uart_callback   设备的串口回调函数
+   43          // 返回参数     void
+   44          // 使用示例     set_wireless_type(WIRELESS_UART, uart_callback);
+   45          // 备注信息     一般由各摄像头初始化内部调用
+   46          //-------------------------------------------------------------------------------------------------------
+             -------------
+   47          void set_wireless_type (wireless_type_enum type_set, uart_index_enum uartx, void *uart_callback)
+   48          {
+C251 COMPILER V5.60.0,  zf_device_type                                                     11/06/25  16:16:32  PAGE 2   
+
+   49   1          wireless_type = type_set;
+   50   1          
+   51   1          if(uartx == UART_1)
+   52   1          {
+   53   2              uart1_irq_handler = uart_callback;
+   54   2          }
+   55   1          else if(uartx == UART_2)
+   56   1          {
+   57   2              uart2_irq_handler = uart_callback;
+   58   2          }
+   59   1          else if(uartx == UART_3)
+   60   1          {
+   61   2              uart3_irq_handler = uart_callback;
+   62   2          }
+   63   1          else if(uartx == UART_4)
+   64   1          {
+   65   2              uart4_irq_handler = uart_callback;
+   66   2          }
+   67   1      }
+   68          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       151     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        10     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         7     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

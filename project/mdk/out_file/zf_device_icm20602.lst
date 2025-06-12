@@ -1,0 +1,467 @@
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_icm20602
+OBJECT MODULE PLACED IN .\out_file\zf_device_icm20602.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_icm20602.c LARGE NOALIAS FLOAT64 W
+                    -ARNINGLEVEL(3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf
+                    -_device;..\..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_device_icm20602.lst) TABS(2) OBJECT(.\out_f
+                    -ile\zf_device_icm20602.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修改它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          /********************************************************************************************************
+             -*************
+   36          * 接线定义:
+   37          *                   ------------------------------------
+   38          *                   模块管脚                                        单片机管脚
+   39          *                   //------------------硬件 SPI 引脚------------------//
+   40          *                   SCL/SPC             查看 zf_device_icm20602.h 中 ICM20602_SPC_PIN 宏定义
+   41          *                   SDA/DSI             查看 zf_device_icm20602.h 中 ICM20602_SDI_PIN 宏定义
+   42          *                   SA0/SDO             查看 zf_device_icm20602.h 中 ICM20602_SDO_PIN 宏定义
+   43          *                   CS                  查看 zf_device_icm20602.h 中 IPS114_CS_PIN 宏定义
+   44          *                   //------------------硬件 SPI 引脚------------------//
+   45          *                   //------------------软件 IIC 引脚------------------//
+   46          *                   SCL/SPC             查看 zf_device_icm20602.h 中 ICM20602_SCL_PIN 宏定义
+   47          *                   SDA/DSI             查看 zf_device_icm20602.h 中 ICM20602_SDA_PIN 宏定义
+   48          *                   //------------------软件 IIC 引脚------------------//
+   49          *                   电源引脚
+   50          *                   VCC                 3.3V电源
+   51          *                   GND                 电源地
+   52          *                   ------------------------------------
+   53          *********************************************************************************************************
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 2   
+
+             -***********/
+   54          
+   55          #include "zf_common_clock.h"
+   56          #include "zf_common_debug.h"
+   57          #include "zf_driver_delay.h"
+   58          #include "zf_driver_spi.h"
+   59          #include "zf_driver_soft_iic.h"
+   60          
+   61          #include "zf_device_icm20602.h"
+   62          
+   63          #pragma warning disable = 183
+   64          #pragma warning disable = 177
+   65          
+   66          int16 icm20602_gyro_x = 0, icm20602_gyro_y = 0, icm20602_gyro_z = 0;            // 三轴陀螺仪数据      gy
+             -ro (陀螺仪)
+   67          int16 icm20602_acc_x = 0, icm20602_acc_y = 0, icm20602_acc_z = 0;               // 三轴加速度计数据    ac
+             -c (accelerometer 加速度计)
+   68          float icm20602_transition_factor[2] = {4096, 16.4};
+   69          
+   70          #if ICM20602_USE_SOFT_IIC
+               static soft_iic_info_struct icm20602_iic_struct;
+               
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               // 函数简介     ICM20602 写寄存器
+               // 参数说明     reg             寄存器地址
+               // 参数说明     dat            数据
+               // 返回参数     void
+               // 使用示例     icm20602_write_register(ICM20602_PWR_MGMT_1, 0x80);
+               // 备注信息     内部调用
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               #define icm20602_write_register(reg, dat)      (soft_iic_write_8bit_register(&icm20602_iic_struct, (reg),
+             - (dat)))
+               
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               // 函数简介     ICM20602 读寄存器
+               // 参数说明     reg             寄存器地址
+               // 返回参数     uint8           数据
+               // 使用示例     icm20602_read_register(ICM20602_WHO_AM_I);
+               // 备注信息     内部调用
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               #define icm20602_read_register(reg)             (soft_iic_read_8bit_register(&icm20602_iic_struct, (reg))
+             -)
+               
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               // 函数简介     ICM20602 读数据
+               // 参数说明     reg             寄存器地址
+               // 参数说明     dat            数据缓冲区
+               // 参数说明     len             数据长度
+               // 返回参数     void
+               // 使用示例     icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat, 6);
+               // 备注信息     内部调用
+               //-------------------------------------------------------------------------------------------------------
+             -------------
+               #define icm20602_read_registers(reg, dat, len) (soft_iic_read_8bit_registers(&icm20602_iic_struct, (reg),
+             - (dat), (len)))
+               #else
+  103          //-------------------------------------------------------------------------------------------------------
+             -------------
+  104          // 函数简介     ICM20602 写寄存器
+  105          // 参数说明     reg             寄存器地址
+  106          // 参数说明     dat            数据
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 3   
+
+  107          // 返回参数     void
+  108          // 使用示例     icm20602_write_register(ICM20602_PWR_MGMT_1, 0x80);
+  109          // 备注信息     内部调用
+  110          //-------------------------------------------------------------------------------------------------------
+             -------------
+  111          static void icm20602_write_register (uint8 reg, uint8 dat)
+  112          {
+  113   1          ICM20602_CS(0);
+  114   1          spi_write_8bit_register(ICM20602_SPI, reg | ICM20602_SPI_W, dat);
+  115   1          ICM20602_CS(1);
+  116   1      }
+  117          
+  118          //-------------------------------------------------------------------------------------------------------
+             -------------
+  119          // 函数简介     ICM20602 读寄存器
+  120          // 参数说明     reg             寄存器地址
+  121          // 返回参数     uint8           数据
+  122          // 使用示例     icm20602_read_register(ICM20602_WHO_AM_I);
+  123          // 备注信息     内部调用
+  124          //-------------------------------------------------------------------------------------------------------
+             -------------
+  125          static uint8 icm20602_read_register (uint8 reg)
+  126          {
+  127   1          uint8 dat = 0;
+  128   1          ICM20602_CS(0);
+  129   1          dat = spi_read_8bit_register(ICM20602_SPI, reg | ICM20602_SPI_R);
+  130   1          ICM20602_CS(1);
+  131   1          return dat;
+  132   1      }
+  133          
+  134          //-------------------------------------------------------------------------------------------------------
+             -------------
+  135          // 函数简介     ICM20602 读数据
+  136          // 参数说明     reg             寄存器地址
+  137          // 参数说明     dat            数据缓冲区
+  138          // 参数说明     len             数据长度
+  139          // 返回参数     void
+  140          // 使用示例     icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat, 6);
+  141          // 备注信息     内部调用
+  142          //-------------------------------------------------------------------------------------------------------
+             -------------
+  143          static void icm20602_read_registers (uint8 reg, uint8 *dat, uint32 len)
+  144          {
+  145   1          ICM20602_CS(0);
+  146   1          spi_read_8bit_registers(ICM20602_SPI, reg | ICM20602_SPI_R, dat, len);
+  147   1          ICM20602_CS(1);
+  148   1      }
+  149          #endif
+  150          
+  151          //-------------------------------------------------------------------------------------------------------
+             -------------
+  152          // 函数简介     ICM20602 自检
+  153          // 参数说明     void
+  154          // 返回参数     uint8           1-自检失败 0-自检成功
+  155          // 使用示例     icm20602_self_check();
+  156          // 备注信息     内部调用
+  157          //-------------------------------------------------------------------------------------------------------
+             -------------
+  158          static uint8 icm20602_self_check (void)
+  159          {
+  160   1          uint8 dat = 0, return_state = 0;
+  161   1          uint16 timeout_count = 0;
+  162   1          
+  163   1          while(0x12 != dat)                                                          // 判断 ID 是否正确
+  164   1          {
+  165   2              if(ICM20602_TIMEOUT_COUNT < timeout_count ++)
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 4   
+
+  166   2              {
+  167   3                  return_state =  1;
+  168   3                  break;
+  169   3              }
+  170   2              
+  171   2              dat = icm20602_read_register(ICM20602_WHO_AM_I);
+  172   2              system_delay_ms(10);
+  173   2          }
+  174   1          
+  175   1          return return_state;
+  176   1      }
+  177          
+  178          //-------------------------------------------------------------------------------------------------------
+             -------------
+  179          // 函数简介     获取 ICM20602 加速度计数据
+  180          // 参数说明     void
+  181          // 返回参数     void
+  182          // 使用示例     icm20602_get_acc();                                             // 执行该函数后，直接查看
+             -对应的变量即可
+  183          // 备注信息
+  184          //-------------------------------------------------------------------------------------------------------
+             -------------
+  185          void icm20602_get_acc (void)
+  186          {
+  187   1          uint8 dat[6];
+  188   1          
+  189   1          icm20602_read_registers(ICM20602_ACCEL_XOUT_H, dat, 6);
+  190   1          icm20602_acc_x = (int16)(((uint16)dat[0] << 8 | dat[1]));
+  191   1          icm20602_acc_y = (int16)(((uint16)dat[2] << 8 | dat[3]));
+  192   1          icm20602_acc_z = (int16)(((uint16)dat[4] << 8 | dat[5]));
+  193   1      }
+  194          
+  195          //-------------------------------------------------------------------------------------------------------
+             -------------
+  196          // 函数简介     获取ICM20602陀螺仪数据
+  197          // 参数说明     void
+  198          // 返回参数     void
+  199          // 使用示例     icm20602_get_gyro();                                            // 执行该函数后，直接查看
+             -对应的变量即可
+  200          // 备注信息
+  201          //-------------------------------------------------------------------------------------------------------
+             -------------
+  202          void icm20602_get_gyro (void)
+  203          {
+  204   1          uint8 dat[6];
+  205   1          
+  206   1          icm20602_read_registers(ICM20602_GYRO_XOUT_H, dat, 6);
+  207   1          icm20602_gyro_x = (int16)(((uint16)dat[0] << 8 | dat[1]));
+  208   1          icm20602_gyro_y = (int16)(((uint16)dat[2] << 8 | dat[3]));
+  209   1          icm20602_gyro_z = (int16)(((uint16)dat[4] << 8 | dat[5]));
+  210   1      }
+  211          
+  212          //-------------------------------------------------------------------------------------------------------
+             -------------
+  213          // 函数简介     初始化 ICM20602
+  214          // 参数说明     void
+  215          // 返回参数     uint8           1-初始化失败 0-初始化成功
+  216          // 使用示例     icm20602_init();
+  217          // 备注信息
+  218          //-------------------------------------------------------------------------------------------------------
+             -------------
+  219          uint8 icm20602_init (void)
+  220          {
+  221   1          uint8 val = 0x0, return_state = 0;
+  222   1          uint16 timeout_count = 0;
+  223   1          
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 5   
+
+  224   1          system_delay_ms(10);                                                        // 上电延时
+  225   1          
+  226   1      #if ICM20602_USE_SOFT_IIC
+                   soft_iic_init(&icm20602_iic_struct, ICM20602_DEV_ADDR, ICM20602_SOFT_IIC_DELAY, ICM20602_SCL_PIN, ICM
+             -20602_SDA_PIN);
+               #else
+  229   1          spi_init(ICM20602_SPI, SPI_MODE0, (uint32)ICM20602_SPI_SPEED, ICM20602_SPC_PIN, ICM20602_SDI_PIN, ICM
+             -20602_SDO_PIN, SPI_CS_NULL);
+  230   1          gpio_init(ICM20602_CS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
+  231   1      #endif
+  232   1          
+  233   1          do
+  234   1          {
+  235   2              if(icm20602_self_check())
+  236   2              {
+  237   3                  // 如果程序在输出了断言信息 并且提示出错位置在这里
+  238   3                  // 那么就是 ICM20602 自检出错并超时退出了
+  239   3                  // 检查一下接线有没有问题 如果没问题可能就是坏了
+  240   3                  printf( "icm20602 self check error.\r\n");
+  241   3                  return_state = 1;
+  242   3                  break;
+  243   3              }
+  244   2              
+  245   2              icm20602_write_register(ICM20602_PWR_MGMT_1, 0x80);                     // 复位设备
+  246   2              system_delay_ms(2);
+  247   2              
+  248   2              do
+  249   2              {
+  250   3                  // 等待复位成功
+  251   3                  val = icm20602_read_register(ICM20602_PWR_MGMT_1);
+  252   3                  
+  253   3                  if(ICM20602_TIMEOUT_COUNT < timeout_count ++)
+  254   3                  {
+  255   4                      // 如果程序在输出了断言信息 并且提示出错位置在这里
+  256   4                      // 那么就是 ICM20602 自检出错并超时退出了
+  257   4                      // 检查一下接线有没有问题 如果没问题可能就是坏了
+  258   4                      printf( "icm20602 reset error.\r\n");
+  259   4                      return_state = 1;
+  260   4                      break;
+  261   4                  }
+  262   3              }
+  263   2              while(0x41 != val);
+  264   2              
+  265   2              if(1 == return_state)
+  266   2              {
+  267   3                  break;
+  268   3              }
+  269   2              
+  270   2              icm20602_write_register(ICM20602_PWR_MGMT_1,     0x01);                 // 时钟设置
+  271   2              icm20602_write_register(ICM20602_PWR_MGMT_2,     0x00);                 // 开启陀螺仪和加速度计
+  272   2              icm20602_write_register(ICM20602_CONFIG,         0x01);                 // 176HZ 1KHZ
+  273   2              icm20602_write_register(ICM20602_SMPLRT_DIV,     0x07);                 // 采样速率 SAMPLE_RATE =
+             - INTERNAL_SAMPLE_RATE / (1 + SMPLRT_DIV)
+  274   2              
+  275   2              // ICM20602_ACCEL_CONFIG 寄存器
+  276   2              // 设置为 0x00 加速度计量程为 ±2  g   获取到的加速度计数据除以 16384  可以转化为带物理单位的数据
+             - 单位 g(m/s^2)
+  277   2              // 设置为 0x08 加速度计量程为 ±4  g   获取到的加速度计数据除以 8192   可以转化为带物理单位的数据
+             - 单位 g(m/s^2)
+  278   2              // 设置为 0x10 加速度计量程为 ±8  g   获取到的加速度计数据除以 4096   可以转化为带物理单位的数据
+             - 单位 g(m/s^2)
+  279   2              // 设置为 0x18 加速度计量程为 ±16 g   获取到的加速度计数据除以 2048   可以转化为带物理单位的数据
+             - 单位 g(m/s^2)
+  280   2              switch(ICM20602_ACC_SAMPLE_DEFAULT)
+  281   2              {
+  282   3                  default:
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 6   
+
+  283   3                  {
+  284   4                      printf( "ICM20602_ACC_SAMPLE_DEFAULT set error.\r\n");
+  285   4                      return_state = 1;
+  286   4                  }
+  287   3                  break;
+  288   3                  
+  289   3                  case ICM20602_ACC_SAMPLE_SGN_2G:
+  290   3                  {
+  291   4                      icm20602_write_register(ICM20602_ACCEL_CONFIG, 0x00);
+  292   4                      icm20602_transition_factor[0] = 16384;
+  293   4                  }
+  294   3                  break;
+  295   3                  
+  296   3                  case ICM20602_ACC_SAMPLE_SGN_4G:
+  297   3                  {
+  298   4                      icm20602_write_register(ICM20602_ACCEL_CONFIG, 0x08);
+  299   4                      icm20602_transition_factor[0] = 8192;
+  300   4                  }
+  301   3                  break;
+  302   3                  
+  303   3                  case ICM20602_ACC_SAMPLE_SGN_8G:
+  304   3                  {
+  305   4                      icm20602_write_register(ICM20602_ACCEL_CONFIG, 0x10);
+  306   4                      icm20602_transition_factor[0] = 4096;
+  307   4                  }
+  308   3                  break;
+  309   3                  
+  310   3                  case ICM20602_ACC_SAMPLE_SGN_16G:
+  311   3                  {
+  312   4                      icm20602_write_register(ICM20602_ACCEL_CONFIG, 0x18);
+  313   4                      icm20602_transition_factor[0] = 2048;
+  314   4                  }
+  315   3                  break;
+  316   3              }
+  317   2              
+  318   2              if(1 == return_state)
+  319   2              {
+  320   3                  break;
+  321   3              }
+  322   2              
+  323   2              // ICM20602_GYRO_CONFIG 寄存器
+  324   2              // 设置为 0x00 陀螺仪量程为 ±250  dps    获取到的陀螺仪数据除以 131     可以转化为带物理单位的数
+             -据 单位为 °/s
+  325   2              // 设置为 0x08 陀螺仪量程为 ±500  dps    获取到的陀螺仪数据除以 65.5    可以转化为带物理单位的数
+             -据 单位为 °/s
+  326   2              // 设置为 0x10 陀螺仪量程为 ±1000 dps    获取到的陀螺仪数据除以 32.8    可以转化为带物理单位的数
+             -据 单位为 °/s
+  327   2              // 设置为 0x18 陀螺仪量程为 ±2000 dps    获取到的陀螺仪数据除以 16.4    可以转化为带物理单位的数
+             -据 单位为 °/s
+  328   2              switch(ICM20602_GYRO_SAMPLE_DEFAULT)
+  329   2              {
+  330   3                  default:
+  331   3                  {
+  332   4                      printf( "ICM20602_GYRO_SAMPLE_DEFAULT set error.\r\n");
+  333   4                      return_state = 1;
+  334   4                  }
+  335   3                  break;
+  336   3                  
+  337   3                  case ICM20602_GYRO_SAMPLE_SGN_250DPS:
+  338   3                  {
+  339   4                      icm20602_write_register(ICM20602_GYRO_CONFIG, 0x00);
+  340   4                      icm20602_transition_factor[1] = 131.0;
+  341   4                  }
+  342   3                  break;
+  343   3                  
+  344   3                  case ICM20602_GYRO_SAMPLE_SGN_500DPS:
+C251 COMPILER V5.60.0,  zf_device_icm20602                                                 26/03/25  08:54:59  PAGE 7   
+
+  345   3                  {
+  346   4                      icm20602_write_register(ICM20602_GYRO_CONFIG, 0x08);
+  347   4                      icm20602_transition_factor[1] = 65.5;
+  348   4                  }
+  349   3                  break;
+  350   3                  
+  351   3                  case ICM20602_GYRO_SAMPLE_SGN_1000DPS:
+  352   3                  {
+  353   4                      icm20602_write_register(ICM20602_GYRO_CONFIG, 0x10);
+  354   4                      icm20602_transition_factor[1] = 32.8;
+  355   4                  }
+  356   3                  break;
+  357   3                  
+  358   3                  case ICM20602_GYRO_SAMPLE_SGN_2000DPS:
+  359   3                  {
+  360   4                      icm20602_write_register(ICM20602_GYRO_CONFIG, 0x18);
+  361   4                      icm20602_transition_factor[1] = 16.4;
+  362   4                  }
+  363   3                  break;
+  364   3              }
+  365   2              
+  366   2              if(1 == return_state)
+  367   2              {
+  368   3                  break;
+  369   3              }
+  370   2              
+  371   2              icm20602_write_register(ICM20602_ACCEL_CONFIG_2, 0x03);                 // Average 4 samples   44
+             -.8HZ   //0x23 Average 16 samples
+  372   2          }
+  373   1          while(0);
+  374   1          
+  375   1          return return_state;
+  376   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1018     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        53     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       191     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

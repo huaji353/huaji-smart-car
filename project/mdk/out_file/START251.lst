@@ -1,0 +1,280 @@
+A251 MACRO ASSEMBLER  START251                                                              11/06/25 16:16:28 PAGE     1
+
+
+MACRO ASSEMBLER A251 V4.69.13.0
+OBJECT MODULE PLACED IN .\out_file\START251.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C251\BIN\A251.EXE ..\..\libraries\zf_common\START251.A51 MODSRC INCDIR(..\..\libraries\
+                      zf_common) SET(LARGE) DEBUG PRINT(.\out_file\START251.lst) OBJECT(.\out_file\START251.obj) EP
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     ;------------------------------------------------------------------------------
+                          2     ;  This file is part of the C251 Compiler package
+                          3     ;  Copyright KEIL ELEKTRONIK GmbH 1995 - 2000
+                          4     ;------------------------------------------------------------------------------
+                          5     ;  START251.A51:  This code is executed after processor reset.
+                          6     ;
+                          7     ;  To translate this file use A251 with the following invocation:
+                          8     ;
+                          9     ;     A251 START251.A51  [ MODSRC ] [ SET (ROMHUGE) ]
+                         10     ;  whereby:
+                         11     ;     MODSRC         defines the 251 Source Mode  (default is Binary Mode)
+                         12     ;     SET (ROMHUGE)  defines the ROM (HUGE) Mode  (default is ROM(LARGE) )
+                         13     ;
+                         14     ;  To link the modified STARTUP.OBJ file to your application use the following
+                         15     ;  L251 invocation:
+                         16     ;
+                         17     ;     L251 START251.OBJ, <your object file list> <controls>
+                         18     ;
+                         19     ;------------------------------------------------------------------------------
+                         20     ;
+                         21     ;  251 Configuration Bytes Definition for off-chip (external) config bytes
+                         22     ;
+                         23     $set  (CONFIGB = 0)   ; Set this variable if you want to set external config
+                         24     ;                    ; bytes at address FF:FFF8 and FF:FFF9.
+                         25     ;
+                         26     ; Wait State for PSEN#/RD#/WR# signal except region 01:xxxx (WSA1 & WSA0 Bits)
+                         27     ; WSA        Val  Description
+                         28     ; ---        ---  -----------
+ 0003                    29     WSA  EQU 3  ; 3 = 0 wait state for all regions except region 01:xxxx
+                         30     ;           ; 2 = extended to 1 wait state  for all regions except 01:xxxx
+                         31     ;           ; 1 = extended to 2 wait states for all regions except 01:xxxx
+                         32     ;           ; 0 = extended to 3 wait states for all regions except 01:xxxx
+                         33     ;
+                         34     ; Extend ALE pulse
+                         35     ; XALE       Val  Description
+                         36     ; ----       ---  -----------
+ 0001                    37     XALE EQU 1  ; 1 = ALE pulse is one TOSC
+                         38     ;           ; 0 = ALE pulse is three TOSC, this adds one external wait state
+                         39     ;
+                         40     ; RD# and PSEN# Function Select  (RD1 and RD0 Bits)
+                         41     ; RD         Val  RD Range   PSEN Range  P1.7 Func  Features
+                         42     ; --         ---  --------   ----------  ---------  --------
+ 0003                    43     RDRG EQU 3  ; 3 = <=7F:FFFF  >=80:FFFF   P1.7/CEX4  Compatible with 8051
+                         44     ;           ; 2 = P3.7 only  All address P1.7/CEX4  One additional port pin
+                         45     ;           ; 1 = RD#=A16    All address P1.7/CEX4  128K External Address space
+                         46     ;           ; 0 = RD#=A16    All address P1.7=A17   256K External Address space
+                         47     ;
+                         48     ; Page Mode Select
+                         49     ; PAGE       Val  Description
+                         50     ; ----       ---  -----------
+ 0001                    51     PAGM EQU 1  ; 1 = Non-page Mode (A15:8 on P2, A7:0/D7:0 on P0, 8051 compatible)
+                         52     ;           ; 0 = Page Mode (A15:8/D7:0 on P2, A7:0 on P0)
+                         53     ;
+                         54     ; Interrupt Mode Select
+                         55     ; INTR       Val  Description
+                         56     ; ----       ---  -----------
+ 0001                    57     INTR EQU 1  ; 1 = Interrupt pushes 4 bytes onto the stack (PC & PSW1)
+A251 MACRO ASSEMBLER  START251                                                              11/06/25 16:16:28 PAGE     2
+
+                         58     ;           ; 0 = Interrupt pushes 2 bytes onto the stack (PCL & PCH only)
+                         59     ;
+                         60     ; Extended Data Float (EDF) Timing Feature
+                         61     ; EDF        Val  Description
+                         62     ; ----       ---  -----------
+ 0001                    63     EDF  EQU 1  ; 1 = Standard (Compatibility) Mode
+                         64     ;           ; 0 = extend data float timing for slow memory devices
+                         65     ;
+                         66     ; Wait State for PSEN#/RD#/WR# signal for region 01:xxxx (WSB1 & WSB0 Bits)
+                         67     ; WSB        Val  Description
+                         68     ; ---        ---  -----------
+ 0003                    69     WSB  EQU 3  ; 3 = 0 wait state for region 01:xxxx
+                         70     ;           ; 2 = extended to 1 wait state  for regions 01:xxxx
+                         71     ;           ; 1 = extended to 2 wait states for regions 01:xxxx
+                         72     ;           ; 0 = extended to 3 wait states for regions 01:xxxx
+                         73     ;
+                         74     ; EPROM/ROM Mapping
+                         75     ; WSA        Val  Description
+                         76     ; ---        ---  -----------
+ 0001                    77     EMAP EQU 1 ;  1 = Map internal ROM only to region FF:xxxx
+                         78     ;          ;  0 = Map higher 8KB of internal ROM to region 00:E000 - 00:FFFF
+                         79     ;
+                         80     ;  Note:  the bit SRC is defined with the A251 directive MODSRC/MODBIN 
+                         81     ; 
+                         82     ;------------------------------------------------------------------------------
+                         83     ;
+                         84     ;  User-defined Power-On Zero Initialization of Memory
+                         85     ;
+                         86     ;  With the following EQU statements the zero initialization of memory
+                         87     ;  at processor reset can be defined:
+                         88     ;
+                         89     ;               ; the absolute start-address of EDATA memory is always 0
+ 0800                    90     EDATALEN        EQU     800H    ; the length of EDATA memory in bytes.
+                         91     ;
+ 00010000                92     XDATASTART      EQU     10000H  ; the absolute start-address of XDATA memory
+ 8000                    93     XDATALEN        EQU     8000H   ; the length of XDATA memory in bytes.
+                         94     ;
+ 00010000                95     HDATASTART      EQU     10000H  ; the absolute start-address of HDATA memory
+ 0000                    96     HDATALEN        EQU     0       ; the length of HDATA memory in bytes.
+                         97     ;
+                         98     ;  Note:  The EDATA space overlaps physically the DATA, IDATA, BIT and EBIT
+                         99     ;         areas of the 251 CPU.
+                        100     ;
+                        101     ;------------------------------------------------------------------------------
+                        102     ;
+                        103     ;  CPU Stack Size Definition 
+                        104     ;
+                        105     ;  The following EQU statement defines the stack space available for the
+                        106     ;  251 application program.  It should be noted that the stack space must
+                        107     ;  be adjusted according the actual requirements of the application.
+                        108     ;
+ 0700                   109     STACKSIZE       EQU     700H    ; set to 700H Bytes.
+                        110     ;
+                        111     ;------------------------------------------------------------------------------
+                        112     ;
+                        113     ;  Reentrant Stack Initilization 
+                        114     ;
+                        115     ;  Note:  the defintions below are only required when you application contains
+                        116     ;         reentrant code which is written with C251 Version 1 or C51.  You
+                        117     ;         should not enable IBPSTACK or XBPSTACK for reentrant code written
+                        118     ;         with C251 Version 2 since this compiler is using the hardware stack
+                        119     ;         of the 251 rather than a simulated stack area.
+                        120     ;
+                        121     ;  The following EQU statements define the stack pointer for reentrant
+                        122     ;  functions and initialized it:
+                        123     ;
+A251 MACRO ASSEMBLER  START251                                                              11/06/25 16:16:28 PAGE     3
+
+                        124     ;  Stack Space for reentrant functions in the SMALL model.
+ 0000                   125     IBPSTACK        EQU     0       ; set to 1 if small reentrant is used.
+ 0100                   126     IBPSTACKTOP     EQU     0FFH+1  ; set top of stack to highest location+1.
+                        127     ;
+                        128     ;  Stack Space for reentrant functions in the LARGE model.      
+ 0000                   129     XBPSTACK        EQU     0       ; set to 1 if large reentrant is used.
+ 00010000               130     XBPSTACKTOP     EQU     0FFFFH+1; set top of stack to highest location+1.
+                        131     ;
+                        132     ;------------------------------------------------------------------------------
+                        133     $if  ROMHUGE
+                                Prefix  LIT '?'
+                                Model   LIT 'FAR'
+                                PRSeg   LIT 'ECODE'
+                                $else 
+                        138     Prefix  LIT ''
+                        139     Model   LIT 'NEAR'
+                        140     PRSeg   LIT 'CODE'
+                        141     $endif 
+                        142     ;$include (reg251s.inc)
+                    +1  143  +1 $save 
+                    +1  284  +1 $restore 
+                        285     EXTRN NUMBER (?C?XDATASEG)              ; Start of XDATA Segment
+                        286                     NAME    ?C_START
+                        287     ; Setting of the Chip Configuration Bytes
+                        288     $if  __MODSRC__
+ 0001                   289     SRCM            EQU     1  ; Select Source Mode
+                        290     $else 
+                                SRCM            EQU     0  ; Select Binary Mode
+                                $endif 
+                        293     $if  (CONFIGB)
+                                CONFIG0         EQU     (WSA*20H)+(XALE*10H)+(RDRG*4)+(PAGM*2)+SRCM+080H
+                                CONFIG1         EQU     (INTR*10H)+(EDF*8)+(WSB*2)+EMAP+0E0H
+                                        
+                                                CSEG    AT      0FFF8H
+                                                DB      CONFIG0         ; Config Byte 0
+                                                DB      CONFIG1         ; Config Byte 1
+                                $endif 
+------                  301     ?C_C51STARTUP   SEGMENT   CODE
+------                  302     ?C_C51STARTUP?3 SEGMENT   CODE
+------                  303     ?STACK          SEGMENT   EDATA
+------                  304                     RSEG    ?STACK
+000000                  305                     DS      STACKSIZE       ; Stack Space 700H Bytes
+                        306                     EXTRN CODE (MAIN)
+                        307                     PUBLIC  ?C_STARTUP
+                        308                     PUBLIC  ?C?STARTUP
+000000                  309                     CSEG    AT      0
+000000                  310     ?C?STARTUP:
+000000                  311     ?C_STARTUP:
+000000 020000     F     312                     LJMP    STARTUP1
+------                  313                     RSEG    ?C_C51STARTUP
+000000                  314     STARTUP1:
+000000 758400     E     315                     MOV     DPXL,#?C?XDATASEG
+                        316     IF EDATALEN <> 0
+000003 7E4407FF         317                     MOV     WR8,#EDATALEN - 1
+000007 E4               318                     CLR     A
+000008 7A49B0           319     EDATALOOP:      MOV     @WR8,R11
+00000B 1B44             320                     DEC     WR8,#1
+00000D 7800       F     321                     JNE     EDATALOOP
+                        322     ENDIF
+                        323     IF XDATALEN <> 0
+00000F 900000           324                     MOV     DPTR,#WORD0 XDATASTART
+000012 7E348000         325                     MOV     WR6,#XDATALEN
+000016 E4               326                     CLR     A
+000017 F0               327     XDATALOOP:      MOVX    @DPTR,A
+000018 A3               328                     INC     DPTR
+000019 1B34             329                     DEC     WR6,#1
+A251 MACRO ASSEMBLER  START251                                                              11/06/25 16:16:28 PAGE     4
+
+00001B 7800       F     330                     JNE     XDATALOOP
+                        331     ENDIF
+                        332     IF HDATALEN <> 0
+                                                MOV     DR16,#WORD0 HDATALEN
+                                IF (WORD2 HDATALEN) <> 0
+                                                MOV     WR16,#WORD2 HDATALEN
+                                ENDIF
+                                                MOV     WR12,#WORD2 HDATASTART
+                                                MOV     WR14,#WORD0 HDATASTART
+                                                CLR     A
+                                HDATALOOP:      MOV     @DR12,R11
+                                                INC     DR12,#1
+                                                DEC     DR16,#1
+                                                JNE     HDATALOOP
+                                ENDIF
+                        345     IF IBPSTACK <> 0
+                                EXTRN DATA (?C_IBP)
+                                                MOV     ?C_IBP,#LOW IBPSTACKTOP
+                                ENDIF
+                        349     IF XBPSTACK <> 0
+                                EXTRN DATA (?C_XBP)
+                                                MOV     ?C_XBP,#HIGH XBPSTACKTOP
+                                                MOV     ?C_XBP+1,#LOW XBPSTACKTOP
+                                ENDIF
+00001D 7EF80000   F     354                     MOV     DR60,#WORD0 (?STACK-1)
+------                  355                     RSEG    ?C_C51STARTUP?3
+000000 020000     E     356                     JMP     NEAR MAIN
+                        357                     END
+A251 MACRO ASSEMBLER  START251                                                              11/06/25 16:16:28 PAGE     5
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E          T Y P E  V A L U E     ATTRIBUTES
+
+?C?STARTUP . . . .  C  ADDR  0000H     R   SEG=?CO?START251?4
+?C?XDATASEG. . . .  N  NUMB  -------       EXT
+?C_C51STARTUP. . .  C  SEG   000021H       REL=UNIT, ALN=BYTE
+?C_C51STARTUP?3. .  C  SEG   000003H       REL=UNIT, ALN=BYTE
+?C_START . . . . .  -- ----  -------       
+?C_STARTUP . . . .  C  ADDR  0000H     R   SEG=?CO?START251?4
+?STACK . . . . . .  ED SEG   000700H       REL=UNIT, ALN=BYTE
+EDATALEN . . . . .  N  NUMB  0800H     A   
+EDATALOOP. . . . .  C  ADDR  0008H     R   SEG=?C_C51STARTUP
+EDF. . . . . . . .  N  NUMB  0001H     A   
+EMAP . . . . . . .  N  NUMB  0001H     A   
+HDATALEN . . . . .  N  NUMB  0000H     A   
+HDATASTART . . . .  N  NUMB  00010000H A   
+IBPSTACK . . . . .  N  NUMB  0000H     A   
+IBPSTACKTOP. . . .  N  NUMB  0100H     A   
+INTR . . . . . . .  N  NUMB  0001H     A   
+MAIN . . . . . . .  C  ADDR  -------       EXT
+MODEL. . . . . . .  -- ----  -------       
+PAGM . . . . . . .  N  NUMB  0001H     A   
+PREFIX . . . . . .  -- ----  -------       
+PRSEG. . . . . . .  -- ----  -------       
+RDRG . . . . . . .  N  NUMB  0003H     A   
+SRCM . . . . . . .  N  NUMB  0001H     A   
+STACKSIZE. . . . .  N  NUMB  0700H     A   
+STARTUP1 . . . . .  C  ADDR  0000H     R   SEG=?C_C51STARTUP
+WSA. . . . . . . .  N  NUMB  0003H     A   
+WSB. . . . . . . .  N  NUMB  0003H     A   
+XALE . . . . . . .  N  NUMB  0001H     A   
+XBPSTACK . . . . .  N  NUMB  0000H     A   
+XBPSTACKTOP. . . .  N  NUMB  00010000H A   
+XDATALEN . . . . .  N  NUMB  8000H     A   
+XDATALOOP. . . . .  C  ADDR  0017H     R   SEG=?C_C51STARTUP
+XDATASTART . . . .  N  NUMB  00010000H A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).

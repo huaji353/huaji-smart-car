@@ -1,0 +1,642 @@
+#include "zf_common_headfile.h"
+#include "game.h"
+#include "snake.h"
+
+// 定义示例变量，这些变量可以在菜单功能中修改
+int16 speed_value = 0;
+float kp_value = 0.0;
+float ki_value = 0.0;
+float kd_value = 0.0;
+
+// 定义菜单页
+menu_page_t menu_pages[15];
+
+// 菜单状态
+menu_state_t menu_state;
+
+// 主菜单页索引
+#define MAIN_MENU_INDEX 0
+
+// 子菜单页索引
+#define SETTING_MENU_INDEX 1
+#define PID_MENU_INDEX 2
+#define INFO_MENU_INDEX 3
+#define GAMES_MENU_INDEX 4
+#define TEST_MENU_INDEX 6
+
+// 声明测试函数
+extern void key_text(void);
+extern void adc_text(void);
+extern void encoder_text(void);
+extern void ips_text(void);
+extern void uart_printf_test(void);
+
+
+
+
+
+// 测试功能封装函数
+void function_key_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "KEY TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+    
+    while (!exit_flag) {
+        // 调用按键测试函数
+        key_text();
+        
+        // 检测退出按键
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }
+        
+        system_delay_ms(50);
+    }
+}
+
+void function_uart_printf_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "UART TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+
+    while (!exit_flag) {
+        // 调用UART测试函数
+        uart_printf_test(); 
+        
+        // 检测退出按键
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }   
+        system_delay_ms(50);
+    }
+}
+
+
+void function_adc_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "ADC TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+    
+    while (!exit_flag) {
+        // 调用ADC测试函数
+        adc_main_read();
+        adc_text();
+        
+        // 检测退出按键
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }
+        
+        system_delay_ms(50);
+    }
+}
+
+void function_encoder_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "ENCODER TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+    
+    while (!exit_flag) {
+        // 调用编码器测试函数
+        encoder_text();
+        
+        // 检测退出按键
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }
+        
+        system_delay_ms(50);
+    }
+}
+
+void function_ips_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "IPS DISPLAY TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+    
+    while (!exit_flag) {
+        // 调用IPS显示测试函数
+        ips_text();
+        
+        // 检测退出按键
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }
+        
+        system_delay_ms(50);
+    }
+}
+void function_buzzer_test(void) {
+    uint8 exit_flag = 0;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 264, "BUZZER TEST");
+    ips200_show_string(10, 280, "Press OK to return");
+    
+    while (!exit_flag) {
+        // 调用蜂鸣器测试函数
+        buzzer_time(100);
+        
+        // 检测退出按键 
+        button_entry();
+        if (button5) {
+            exit_flag = 1;
+        }
+        
+        system_delay_ms(50);    
+    }
+}  
+// 初始化菜单系统
+void menu_init(void) {
+    // 初始化菜单状态
+    menu_state.current_level = 0;
+    menu_state.current_page[0] = MAIN_MENU_INDEX;
+    menu_state.current_index[0] = 0;
+    
+    // 初始化主菜单页
+    strcpy(menu_pages[MAIN_MENU_INDEX].title, "MAIN MENU");
+    menu_pages[MAIN_MENU_INDEX].item_count = 6;
+    
+    // 设置主菜单项目
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[0].name, "Settings");
+    menu_pages[MAIN_MENU_INDEX].items[0].function = NULL;
+    menu_pages[MAIN_MENU_INDEX].items[0].has_child = 1;
+    menu_pages[MAIN_MENU_INDEX].items[0].child_index = SETTING_MENU_INDEX;
+    
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[1].name, "PID Parameters");
+    menu_pages[MAIN_MENU_INDEX].items[1].function = NULL;
+    menu_pages[MAIN_MENU_INDEX].items[1].has_child = 1;
+    menu_pages[MAIN_MENU_INDEX].items[1].child_index = PID_MENU_INDEX;
+    
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[2].name, "Games");
+    menu_pages[MAIN_MENU_INDEX].items[2].function = NULL;
+    menu_pages[MAIN_MENU_INDEX].items[2].has_child = 1;
+    menu_pages[MAIN_MENU_INDEX].items[2].child_index = GAMES_MENU_INDEX;
+    
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[3].name, "Tests");
+    menu_pages[MAIN_MENU_INDEX].items[3].function = NULL;
+    menu_pages[MAIN_MENU_INDEX].items[3].has_child = 1;
+    menu_pages[MAIN_MENU_INDEX].items[3].child_index = TEST_MENU_INDEX;
+    
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[4].name, "Calibration");
+    menu_pages[MAIN_MENU_INDEX].items[4].function = function_sensor_calibration;
+    menu_pages[MAIN_MENU_INDEX].items[4].has_child = 0;
+    
+    strcpy(menu_pages[MAIN_MENU_INDEX].items[5].name, "System Info");
+    menu_pages[MAIN_MENU_INDEX].items[5].function = function_system_info;
+    menu_pages[MAIN_MENU_INDEX].items[5].has_child = 0;
+    
+    // 初始化设置子菜单页
+    strcpy(menu_pages[SETTING_MENU_INDEX].title, "SETTINGS");
+    menu_pages[SETTING_MENU_INDEX].item_count = 3;
+    
+    strcpy(menu_pages[SETTING_MENU_INDEX].items[0].name, "Speed");
+    menu_pages[SETTING_MENU_INDEX].items[0].function = function_speed_setting;
+    menu_pages[SETTING_MENU_INDEX].items[0].has_child = 0;
+    
+    strcpy(menu_pages[SETTING_MENU_INDEX].items[1].name, "Display Mode");
+    menu_pages[SETTING_MENU_INDEX].items[1].function = function_dummy;
+    menu_pages[SETTING_MENU_INDEX].items[1].has_child = 0;
+    
+    strcpy(menu_pages[SETTING_MENU_INDEX].items[2].name, "Back");
+    menu_pages[SETTING_MENU_INDEX].items[2].function = NULL;
+    menu_pages[SETTING_MENU_INDEX].items[2].has_child = 0;
+    
+    // 初始化PID子菜单页
+    strcpy(menu_pages[PID_MENU_INDEX].title, "PID PARAMETERS");
+    menu_pages[PID_MENU_INDEX].item_count = 4;
+    
+    strcpy(menu_pages[PID_MENU_INDEX].items[0].name, "KP Value");
+    menu_pages[PID_MENU_INDEX].items[0].function = function_pid_setting;
+    menu_pages[PID_MENU_INDEX].items[0].has_child = 0;
+    
+    strcpy(menu_pages[PID_MENU_INDEX].items[1].name, "KI Value");
+    menu_pages[PID_MENU_INDEX].items[1].function = function_pid_setting;
+    menu_pages[PID_MENU_INDEX].items[1].has_child = 0;
+    
+    strcpy(menu_pages[PID_MENU_INDEX].items[2].name, "KD Value");
+    menu_pages[PID_MENU_INDEX].items[2].function = function_pid_setting;
+    menu_pages[PID_MENU_INDEX].items[2].has_child = 0;
+    
+    strcpy(menu_pages[PID_MENU_INDEX].items[3].name, "Back");
+    menu_pages[PID_MENU_INDEX].items[3].function = NULL;
+    menu_pages[PID_MENU_INDEX].items[3].has_child = 0;
+    
+    // 初始化游戏子菜单页
+    strcpy(menu_pages[GAMES_MENU_INDEX].title, "GAMES");
+    menu_pages[GAMES_MENU_INDEX].item_count = 3;
+    
+    strcpy(menu_pages[GAMES_MENU_INDEX].items[0].name, "Snake Game");
+    menu_pages[GAMES_MENU_INDEX].items[0].function = function_snake;
+    menu_pages[GAMES_MENU_INDEX].items[0].has_child = 0;
+    
+    strcpy(menu_pages[GAMES_MENU_INDEX].items[1].name, "Space Shooter");
+    menu_pages[GAMES_MENU_INDEX].items[1].function = function_game;
+    menu_pages[GAMES_MENU_INDEX].items[1].has_child = 0;
+    
+    strcpy(menu_pages[GAMES_MENU_INDEX].items[2].name, "Back");
+    menu_pages[GAMES_MENU_INDEX].items[2].function = NULL;
+    menu_pages[GAMES_MENU_INDEX].items[2].has_child = 0;
+    
+    // 初始化测试子菜单页
+    strcpy(menu_pages[TEST_MENU_INDEX].title, "TESTS");
+    menu_pages[TEST_MENU_INDEX].item_count = 6;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[0].name, "Key Test");
+    menu_pages[TEST_MENU_INDEX].items[0].function = function_key_test;
+    menu_pages[TEST_MENU_INDEX].items[0].has_child = 0;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[1].name, "ADC Test");
+    menu_pages[TEST_MENU_INDEX].items[1].function = function_adc_test;
+    menu_pages[TEST_MENU_INDEX].items[1].has_child = 0;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[2].name, "Encoder Test");
+    menu_pages[TEST_MENU_INDEX].items[2].function = function_encoder_test;
+    menu_pages[TEST_MENU_INDEX].items[2].has_child = 0;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[3].name, "Display Test");
+    menu_pages[TEST_MENU_INDEX].items[3].function = function_ips_test;
+    menu_pages[TEST_MENU_INDEX].items[3].has_child = 0;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[4].name, "Buzzer Test");
+    menu_pages[TEST_MENU_INDEX].items[4].function = function_buzzer_test;
+    menu_pages[TEST_MENU_INDEX].items[4].has_child = 0;
+    
+    strcpy(menu_pages[TEST_MENU_INDEX].items[5].name, "UART Test");
+    menu_pages[TEST_MENU_INDEX].items[5].function = function_uart_printf_test;
+    menu_pages[TEST_MENU_INDEX].items[5].has_child = 0;
+}
+
+// 显示当前菜单
+void menu_display(void) {
+    uint8 i;
+    uint8 current_page_index = menu_state.current_page[menu_state.current_level];
+    uint8 current_item_index = menu_state.current_index[menu_state.current_level];
+    menu_page_t *current_page = &menu_pages[current_page_index];
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    
+    // 显示菜单标题
+    ips200_show_string(10, 10, current_page->title);
+    
+    // 绘制分隔线
+    for (i = 0; i < 30; i++) {
+        ips200_show_string(10 + i * 8, 30, "-");
+    }
+    
+    // 显示菜单项
+    for (i = 0; i < current_page->item_count; i++) {
+        if (i == current_item_index) {
+            // 高亮显示当前选中项
+            ips200_set_color(RGB565_WHITE, RGB565_BLUE);
+            ips200_show_string(20, 50 + i * 30, current_page->items[i].name);
+            ips200_set_color(RGB565_BLACK, RGB565_WHITE);
+        } else {
+            ips200_show_string(20, 50 + i * 30, current_page->items[i].name);
+        }
+        
+        // 如果有子菜单，显示">"符号
+        if (current_page->items[i].has_child) {
+            ips200_show_string(220, 50 + i * 30, ">");
+        }
+    }
+    
+    // 显示操作提示
+    ips200_show_string(10, 280, "UP/DOWN: Navigate  OK: Select");
+    
+    // 如果不是第一级菜单，显示返回提示
+    if (menu_state.current_level > 0) {
+        ips200_show_string(10, 300, "LEFT: Back");
+    }
+}
+
+// 处理菜单按键输入
+void menu_process_buttons(void) {
+    uint8 current_page_index = menu_state.current_page[menu_state.current_level];
+    uint8 current_item_index = menu_state.current_index[menu_state.current_level];
+    menu_page_t *current_page = &menu_pages[current_page_index];
+    menu_item_t *current_item = &current_page->items[current_item_index];
+    uint8 key_pressed = 0;  // 标记是否有按键被处理
+    
+    // 上移选择
+    if (button4) {
+        if (current_item_index > 0) {
+            menu_state.current_index[menu_state.current_level]--;
+            menu_display();
+        }
+    }
+    
+    // 下移选择
+    if (button3) {
+        if (current_item_index < current_page->item_count - 1) {
+            menu_state.current_index[menu_state.current_level]++;
+            menu_display();
+        }
+    }
+    
+    // 左返回上一级菜单
+    if (button1) {
+        if (menu_state.current_level > 0) {
+            menu_state.current_level--;
+            menu_display();
+        }
+    }
+    
+    // 右进入子菜单
+    if (button2) {
+        if (current_item->has_child) {
+            menu_state.current_level++;
+            menu_state.current_page[menu_state.current_level] = current_item->child_index;
+            menu_state.current_index[menu_state.current_level] = 0;
+            menu_display();
+        }
+    }
+    
+    // 确认按钮
+    if (button5) {
+        // 判断当前选中项是否为"Back"
+        if (strcmp(current_item->name, "Back") == 0) {
+            // 返回上一级菜单
+            if (menu_state.current_level > 0) {
+                menu_state.current_level--;
+                menu_display();
+            }
+        } 
+        // 如果有子菜单，进入子菜单
+        else if (current_item->has_child) {
+            menu_state.current_level++;
+            menu_state.current_page[menu_state.current_level] = current_item->child_index;
+            menu_state.current_index[menu_state.current_level] = 0;
+            menu_display();
+        }
+        // 如果有功能函数，执行功能
+        else if (current_item->function != NULL) {
+            current_item->function();
+            menu_display();
+        }
+    }
+}
+
+// 菜单运行函数，放在主循环中调用
+void menu_run(void) {
+    static uint8 last_button_status[6] = {0, 0, 0, 0, 0, 0}; // 记录上一次的按键状态
+    
+    // 处理按键输入
+    button_entry();
+    
+    // 显示实时VCC值
+    display_vcc();
+    
+    // 检查按键状态是否已经处理过，如果已处理过就跳过
+    if (button1 && !last_button_status[0]) {
+        last_button_status[0] = 1;
+    } else if (!button1 && last_button_status[0]) {
+        last_button_status[0] = 0;
+    } else if (button1) {
+        button1 = 0; // 已经处理过，清除状态
+    }
+    
+    if (button2 && !last_button_status[1]) {
+        last_button_status[1] = 1;
+    } else if (!button2 && last_button_status[1]) {
+        last_button_status[1] = 0;
+    } else if (button2) {
+        button2 = 0; // 已经处理过，清除状态
+    }
+    
+    if (button3 && !last_button_status[2]) {
+        last_button_status[2] = 1;
+    } else if (!button3 && last_button_status[2]) {
+        last_button_status[2] = 0;
+    } else if (button3) {
+        button3 = 0; // 已经处理过，清除状态
+    }
+    
+    if (button4 && !last_button_status[3]) {
+        last_button_status[3] = 1;
+    } else if (!button4 && last_button_status[3]) {
+        last_button_status[3] = 0;
+    } else if (button4) {
+        button4 = 0; // 已经处理过，清除状态
+    }
+    
+    if (button5 && !last_button_status[4]) {
+        last_button_status[4] = 1;
+    } else if (!button5 && last_button_status[4]) {
+        last_button_status[4] = 0;
+    } else if (button5) {
+        button5 = 0; // 已经处理过，清除状态
+    }
+    
+    if (button_switch && !last_button_status[5]) {
+        last_button_status[5] = 1;
+    } else if (!button_switch && last_button_status[5]) {
+        last_button_status[5] = 0;
+    } else if (button_switch) {
+        button_switch = 0; // 已经处理过，清除状态
+    }
+    
+    // 处理菜单按键
+    menu_process_buttons();
+    
+    // 添加额外延时，确保按键有足够的释放时间
+    system_delay_ms(20);
+}
+
+// ========== 示例功能函数实现 ==========
+
+// 空函数
+void function_dummy(void) {
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 100, "Function Called");
+    ips200_show_string(10, 280, "Press any key to return");
+    
+    // 等待任意按键返回
+    while(1) {
+        button_entry();
+        if (button1 || button2 || button3 || button4 || button5 || button_switch) {
+            break;
+        }
+    }
+}
+
+// 速度设置功能
+void function_speed_setting(void) {
+    uint8 exit_flag = 0;
+    uint8 i;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 10, "SPEED SETTING");
+    
+    // 绘制分隔线
+    for (i = 0; i < 30; i++) {
+        ips200_show_string(10 + i * 8, 30, "-");
+    }
+    
+    while (!exit_flag) {
+        // 显示当前速度值
+        ips200_show_string(20, 60, "Current speed: ");
+        ips200_show_int16(180, 60, speed_value);
+        
+        // 显示操作提示
+        ips200_show_string(10, 200, "UP/DOWN: +/- value");
+        ips200_show_string(10, 230, "LEFT: Return");
+        
+        // 处理按键
+        button_entry();
+        
+        if (button4) {  // 上键增加
+            speed_value += 1;
+        }
+        
+        if (button3) {  // 下键减少
+            speed_value -= 1;
+        }
+        
+        if (button1) {  // 左键返回
+            exit_flag = 1;
+        }
+    }
+}
+
+// PID参数设置功能
+void function_pid_setting(void) {
+    uint8 exit_flag = 0;
+    float *current_value;
+    char *param_name;
+    uint8 current_page_index = menu_state.current_page[menu_state.current_level];
+    uint8 current_item_index = menu_state.current_index[menu_state.current_level];
+    uint8 i;
+    
+    // 确定当前编辑的参数
+    if (strcmp(menu_pages[current_page_index].items[current_item_index].name, "KP Value") == 0) {
+        current_value = &kp_value;
+        param_name = "KP";
+    } else if (strcmp(menu_pages[current_page_index].items[current_item_index].name, "KI Value") == 0) {
+        current_value = &ki_value;
+        param_name = "KI";
+    } else if (strcmp(menu_pages[current_page_index].items[current_item_index].name, "KD Value") == 0) {
+        current_value = &kd_value;
+        param_name = "KD";
+    } else {
+        return;
+    }
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 10, "PID PARAMETER SETTING");
+    
+    // 绘制分隔线
+    for (i = 0; i < 30; i++) {
+        ips200_show_string(10 + i * 8, 30, "-");
+    }
+    
+    while (!exit_flag) {
+        // 显示当前参数值
+        ips200_show_string(20, 60, param_name);
+        ips200_show_string(20, 90, "Value: ");
+        ips200_show_float(100, 90, *current_value, 2, 3);
+        
+        // 显示操作提示
+        ips200_show_string(10, 200, "UP/DOWN: +/- value");
+        ips200_show_string(10, 230, "LEFT: Return");
+        
+        // 处理按键
+        button_entry();
+        
+        if (button4) {  // 上键增加
+            (*current_value) += 0.1;
+        }
+        
+        if (button3) {  // 下键减少
+            (*current_value) -= 0.1;
+        }
+        
+        if (button1) {  // 左键返回
+            exit_flag = 1;
+        }
+    }
+}
+
+// 传感器校准功能
+void function_sensor_calibration(void) {
+    uint8 i;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 10, "SENSOR CALIBRATION");
+    
+    // 绘制分隔线
+    for (i = 0; i < 30; i++) {
+        ips200_show_string(10 + i * 8, 30, "-");
+    }
+    
+    ips200_show_string(20, 60, "Calibrating sensors...");
+    ips200_show_string(20, 90, "Please wait...");
+    
+    // 模拟校准过程
+    system_delay_ms(1000);
+    
+    ips200_show_string(20, 120, "Calibration complete!");
+    ips200_show_string(10, 200, "Press any key to return");
+    
+    // 等待任意按键返回
+    while(1) {
+        button_entry();
+        if (button1 || button2 || button3 || button4 || button5 || button_switch) {
+            break;
+        }
+    }
+}
+
+// 系统信息显示功能
+void function_system_info(void) {
+    uint8 i;
+    
+    // 清屏
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(10, 10, "SYSTEM INFORMATION");
+    
+    // 绘制分隔线
+    for (i = 0; i < 30; i++) {
+        ips200_show_string(10 + i * 8, 30, "-");
+    }
+    
+    ips200_show_string(20, 60, "System: AI8051U-34k64");
+    ips200_show_string(20, 90, "Version: 1.0.0");
+    ips200_show_string(20, 120, "Build Date: 2025-3-19");
+    
+    ips200_show_string(10, 280, "Press any key to return");
+    
+    // 等待任意按键返回
+    while(1) {
+        button_entry();
+        if (button1 || button2 || button3 || button4 || button5 || button_switch) {
+            break;
+        }
+    }
+}

@@ -1,0 +1,48 @@
+{
+    "configurations": [
+        {
+            "name": "AI8051U_32bit",
+            "intelliSenseMode": "${default}",
+            "cStandard": "c89",
+            "cppStandard": "c++17",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\Keil_v5\\C251\\INC",
+                "C:\\Keil_v5\\C251\\INC\\STC",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\libraries\\zf_common",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\libraries\\zf_components",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\libraries\\zf_device",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\libraries\\zf_driver",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\project\\user",
+                "d:\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\project\\code"
+            ],
+            "defines": [
+                "__C251__",
+                "__VSCODE_C251__",
+                "reentrant=",
+                "compact=",
+                "small=",
+                "large=",
+                "data=",
+                "idata=",
+                "pdata=",
+                "bdata=",
+                "edata=",
+                "xdata=",
+                "code=",
+                "bit=char",
+                "sbit=char",
+                "sfr=char",
+                "sfr16=int",
+                "sfr32=int",
+                "interrupt=",
+                "using=",
+                "far=",
+                "_at_=",
+                "_priority_=",
+                "_task_="
+            ]
+        }
+    ],
+    "version": 4
+}

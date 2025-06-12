@@ -1,0 +1,307 @@
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_encoder
+OBJECT MODULE PLACED IN .\out_file\zf_driver_encoder.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_encoder.c LARGE NOALIAS WARNINGLEV
+                    -EL(3) OPTIMIZE(1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;.
+                    -.\..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_driver_encoder.lst) TABS(2) OBJECT(.\out_file\zf_dri
+                    -ver_encoder.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library ¼´£¨AI8051U ¿ªÔ´¿â£©ÊÇÒ»¸ö»ùÓÚ¹Ù·½ SDK ½Ó¿ÚµÄµÚÈý·½¿ªÔ´¿â
+    3          * Copyright (c) 2022 SEEKFREE Öð·É¿Æ¼¼
+    4          *
+    5          * ±¾ÎÄ¼þÊÇSTC ¿ªÔ´¿âµÄÒ»²¿·Ö
+    6          *
+    7          * AI8051U ¿ªÔ´¿â ÊÇÃâ·ÑÈí¼þ
+    8          * Äú¿ÉÒÔ¸ù¾Ý×ÔÓÉÈí¼þ»ù½ð»á·¢²¼µÄ GPL£¨GNU General Public License£¬¼´ GNUÍ¨ÓÃ¹«¹²Ðí¿ÉÖ¤£©µÄÌõ¿î
+    9          * ¼´ GPL µÄµÚ3°æ£¨¼´ GPL3.0£©»ò£¨ÄúÑ¡ÔñµÄ£©ÈÎºÎºóÀ´µÄ°æ±¾£¬ÖØÐÂ·¢²¼ºÍ/»òÐÞ¸ÄËü
+   10          *
+   11          * ±¾¿ªÔ´¿âµÄ·¢²¼ÊÇÏ£ÍûËüÄÜ·¢»Ó×÷ÓÃ£¬µ«²¢Î´¶ÔÆä×÷ÈÎºÎµÄ±£Ö¤
+   12          * ÉõÖÁÃ»ÓÐÒþº¬µÄÊÊÏúÐÔ»òÊÊºÏÌØ¶¨ÓÃÍ¾µÄ±£Ö¤
+   13          * ¸ü¶àÏ¸½ÚÇë²Î¼û GPL
+   14          *
+   15          * ÄúÓ¦¸ÃÔÚÊÕµ½±¾¿ªÔ´¿âµÄÍ¬Ê±ÊÕµ½Ò»·Ý GPL µÄ¸±±¾
+   16          * Èç¹ûÃ»ÓÐ£¬Çë²ÎÔÄ<https://www.gnu.org/licenses/>
+   17          *
+   18          * ¶îÍâ×¢Ã÷£º
+   19          * ±¾¿ªÔ´¿âÊ¹ÓÃ GPL3.0 ¿ªÔ´Ðí¿ÉÖ¤Ð­Òé ÒÔÉÏÐí¿ÉÉêÃ÷ÎªÒëÎÄ°æ±¾
+   20          * Ðí¿ÉÉêÃ÷Ó¢ÎÄ°æÔÚ libraries/doc ÎÄ¼þ¼ÐÏÂµÄ GPL3_permission_statement.txt ÎÄ¼þÖÐ
+   21          * Ðí¿ÉÖ¤¸±±¾ÔÚ libraries ÎÄ¼þ¼ÐÏÂ ¼´¸ÃÎÄ¼þ¼ÐÏÂµÄ LICENSE ÎÄ¼þ
+   22          * »¶Ó­¸÷Î»Ê¹ÓÃ²¢´«²¥±¾³ÌÐò µ«ÐÞ¸ÄÄÚÈÝÊ±±ØÐë±£ÁôÖð·É¿Æ¼¼µÄ°æÈ¨ÉùÃ÷£¨¼´±¾ÉùÃ÷£©
+   23          *
+   24          * ÎÄ¼þÃû³Æ          
+   25          * ¹«Ë¾Ãû³Æ          ³É¶¼Öð·É¿Æ¼¼ÓÐÏÞ¹«Ë¾
+   26          * °æ±¾ÐÅÏ¢          ²é¿´ libraries/doc ÎÄ¼þ¼ÐÄÚ version ÎÄ¼þ °æ±¾ËµÃ÷
+   27          * ¿ª·¢»·¾³          MDK FOR C251
+   28          * ÊÊÓÃÆ½Ì¨          AI8051U
+   29          * µêÆÌÁ´½Ó          https://seekfree.taobao.com/
+   30          *
+   31          * ÐÞ¸Ä¼ÇÂ¼
+   32          * ÈÕÆÚ              ×÷Õß           ±¸×¢
+   33          * 2024-08-01        ´óW            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_driver_gpio.h"
+   37          #include "zf_driver_encoder.h"
+   38          
+   39          static volatile uint8 encoder_dir_pin[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+   40          
+   41          //-------------------------------------------------------------------------------------------------------
+             -------------
+   42          // º¯Êý¼ò½é     ¶¨Ê±Æ÷±àÂëÆ÷½âÂëÈ¡Öµ
+   43          // ²ÎÊýËµÃ÷     encoder_n      ¶¨Ê±Æ÷Ã¶¾ÙÌå
+   44          // ·µ»Ø²ÎÊý     void
+   45          // ±¸×¢ÐÅÏ¢
+   46          // Ê¹ÓÃÊ¾Àý    encoder_get_count(TIM2_ENCOEDER)  // »ñÈ¡¶¨Ê±Æ÷2µÄ²É¼¯µ½µÄ±àÂëÆ÷Êý¾Ý
+   47          //-------------------------------------------------------------------------------------------------------
+             -------------
+   48          int16 encoder_get_count(encoder_index_enum encoder_n)
+   49          {
+   50   1          int16 dat = 0;
+   51   1          
+   52   1          switch(encoder_n)
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 2   
+
+   53   1          {
+   54   2              case TIM0_ENCOEDER:
+   55   2              {
+   56   3                  dat = (uint16)TH0 << 8;
+   57   3                  dat = ((uint8)TL0) | dat;
+   58   3                  break;
+   59   3              }
+   60   2              
+   61   2              case TIM1_ENCOEDER:
+   62   2              {
+   63   3                  dat = (uint16)TH1 << 8;
+   64   3                  dat = ((uint8)TL1) | dat;
+   65   3                  break;
+   66   3              }
+   67   2              
+   68   2              case TIM2_ENCOEDER:
+   69   2              {
+   70   3                  dat = (uint16)T2H << 8;
+   71   3                  dat = ((uint8)T2L) | dat;
+   72   3                  break;
+   73   3              }
+   74   2              
+   75   2              case TIM3_ENCOEDER:
+   76   2              {
+   77   3                  dat = (uint16)T3H << 8;
+   78   3                  dat = ((uint8)T3L) | dat;
+   79   3                  break;
+   80   3              }
+   81   2              
+   82   2              case TIM4_ENCOEDER:
+   83   2              {
+   84   3                  dat = (uint16)T4H << 8;
+   85   3                  dat = ((uint8)T4L) | dat;
+   86   3                  break;
+   87   3              }
+   88   2              
+   89   2              case TIM11_ENCOEDER:
+   90   2              {
+   91   3                  dat = (uint16)T11H << 8;
+   92   3                  dat = ((uint8)T11L) | dat;
+   93   3                  break;
+   94   3              }
+   95   2              
+   96   2          }
+   97   1          
+   98   1          if(gpio_get_level(encoder_dir_pin[encoder_n]))
+   99   1          {
+  100   2              return (-dat);
+  101   2          }
+  102   1          
+  103   1          return dat;
+  104   1      }
+  105          
+  106          //-------------------------------------------------------------------------------------------------------
+             -------------
+  107          // º¯Êý¼ò½é     ¶¨Ê±Æ÷µÄ¼ÆÊýÆ÷Çå¿Õ
+  108          // ²ÎÊýËµÃ÷     encoder_n      ¶¨Ê±Æ÷Ã¶¾ÙÌå
+  109          // ·µ»Ø²ÎÊý     void
+  110          // ±¸×¢ÐÅÏ¢
+  111          // Ê¹ÓÃÊ¾Àý    encoder_clear_count(TIM1_ENCOEDER)  //Çå³ý¶¨Ê±Æ÷1²É¼¯µ½µÄ±àÂëÆ÷Êý¾Ý
+  112          //-------------------------------------------------------------------------------------------------------
+             -------------
+  113          void encoder_clear_count(encoder_index_enum encoder_n)
+  114          {
+  115   1          switch(encoder_n)
+  116   1          {
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 3   
+
+  117   2              case TIM0_ENCOEDER:
+  118   2              {
+  119   3                  TR0 = 0;
+  120   3                  TH0 = 0;
+  121   3                  TL0 = 0;
+  122   3                  TR0 = 1;
+  123   3                  break;
+  124   3              }
+  125   2              
+  126   2              case TIM1_ENCOEDER:
+  127   2              {
+  128   3                  TR1 = 0;
+  129   3                  TH1 = 0;
+  130   3                  TL1 = 0;
+  131   3                  TR1 = 1;
+  132   3                  break;
+  133   3              }
+  134   2              
+  135   2              case TIM2_ENCOEDER:
+  136   2              {
+  137   3                  AUXR &= ~(1 << 4);
+  138   3                  T2H = 0;
+  139   3                  T2L = 0;
+  140   3                  AUXR |= 1 << 4;
+  141   3                  break;
+  142   3              }
+  143   2              
+  144   2              case TIM3_ENCOEDER:
+  145   2              {
+  146   3                  T4T3M &= ~(1 << 3);
+  147   3                  T3H = 0;
+  148   3                  T3L = 0;
+  149   3                  T4T3M |= (1 << 3);
+  150   3                  break;
+  151   3              }
+  152   2              
+  153   2              case TIM4_ENCOEDER:
+  154   2              {
+  155   3                  T4T3M &= ~(1 << 7);
+  156   3                  T4H = 0;
+  157   3                  T4L = 0;
+  158   3                  T4T3M |= (1 << 7);
+  159   3                  break;
+  160   3              }
+  161   2              
+  162   2              case TIM11_ENCOEDER:
+  163   2              {
+  164   3                  T11CR &= ~(1 << 7);
+  165   3                  T11H = 0;
+  166   3                  T11L = 0;
+  167   3                  T11CR |= (1 << 7);
+  168   3                  break;
+  169   3              }
+  170   2          }
+  171   1      }
+  172          
+  173          //-------------------------------------------------------------------------------------------------------
+             -------------
+  174          // º¯Êý¼ò½é     ±àÂëÆ÷½âÂë³õÊ¼»¯
+  175          // ²ÎÊýËµÃ÷     timer_ch        ¶¨Ê±Æ÷Ã¶¾ÙÌå
+  176          // ²ÎÊýËµÃ÷     lsb_pin         ±àÂëÆ÷Âö³åÒý½Å
+  177          // ²ÎÊýËµÃ÷     dir_pin         ±àÂëÆ÷·½ÏòÒý½Å
+  178          // ·µ»Ø²ÎÊý     void
+  179          //          ÍÆ¼öÊ¹ÓÃ´ø·½Ïò½âÂë±àÂëÆ÷¡£
+  180          // Ê¹ÓÃÊ¾Àý      encoder_init_dir(TIM1_ENCOEDER, TIM1_CH1_ENCOEDER_E9, TIM1_CH2_ENCOEDER_E11)
+  181          //                              // Ê¹ÓÃ¶¨Ê±Æ÷1 ×ö´ø·½ÏòµÄ±àÂëÆ÷½âÂë£¬ Í¨µÀ1·½ÏòÐÅºÅÒý½ÅE9£¬Í¨µÀ2Âö³åÐÅºÅÒ
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 4   
+
+             -ý½ÅE11
+  182          //-------------------------------------------------------------------------------------------------------
+             -------------
+  183          void encoder_dir_init(encoder_index_enum encoder_n, gpio_pin_enum dir_pin, encoder_channel_enum lsb_pin)
+  184          {
+  185   1          // Èç¹û³ÌÐòÔÚÊä³öÁË¶ÏÑÔÐÅÏ¢ ²¢ÇÒÌáÊ¾³ö´íÎ»ÖÃÔÚÕâÀï
+  186   1          // ¾ÍÈ¥²é¿´ÄãÔÚÊ²Ã´µØ·½µ÷ÓÃÕâ¸öº¯Êý ¼ì²éÄãµÄ´«Èë²ÎÊý
+  187   1          // ÕâÀïÊÇ¼ì²éÊÇ·ñÓÐÖØ¸´Ê¹ÓÃ¶¨Ê±Æ÷
+  188   1          // ±ÈÈç³õÊ¼»¯ÁË TIM1_PWM È»ºóÓÖ³õÊ¼»¯³É TIM1_ENCODER ÕâÖÖÓÃ·¨ÊÇ²»ÔÊÐíµÄ
+  189   1          //zf_assert(timer_funciton_check(encoder_n, TIMER_FUNCTION_ENCODER));
+  190   1          //zf_assert((dir_pin >> 8) == 0x00);
+  191   1          //zf_assert((lsb_pin >> 8) == encoder_n);
+  192   1          
+  193   1          // ³õÊ¼»¯·½ÏòÒý½Å
+  194   1          gpio_init(dir_pin, GPI, 0, GPI_PULL_UP);
+  195   1        
+  196   1          gpio_init(lsb_pin&0xFF, GPI, 0, GPI_PULL_UP);
+  197   1        
+  198   1          encoder_dir_pin[encoder_n] = dir_pin;                               // ½«·½ÏòÒý½ÅºÅ´æÈëÊý×éÖÐ
+  199   1          
+  200   1          switch(encoder_n)
+  201   1          {
+  202   2              case TIM0_ENCOEDER:
+  203   2              {
+  204   3                  TL0 = 0;
+  205   3                  TH0 = 0;
+  206   3                  TMOD |= 0x04; //Íâ²¿¼ÆÊýÄ£Ê½
+  207   3                  TR0 = 1; //Æô¶¯¶¨Ê±Æ÷
+  208   3                  break;
+  209   3              }
+  210   2              
+  211   2              case TIM1_ENCOEDER:
+  212   2              {
+  213   3                  TL1 = 0x00;
+  214   3                  TH1 = 0x00;
+  215   3                  TMOD |= 0x40; // Íâ²¿¼ÆÊýÄ£Ê½
+  216   3                  TR1 = 1; // Æô¶¯¶¨Ê±Æ÷
+  217   3                  break;
+  218   3              }
+  219   2              
+  220   2              case TIM2_ENCOEDER:
+  221   2              {
+  222   3                  T2L = 0x00;
+  223   3                  T2H = 0x00;
+  224   3                  AUXR |= 0x18; // ÉèÖÃÍâ²¿¼ÆÊýÄ£Ê½²¢Æô¶¯¶¨Ê±Æ÷
+  225   3                  break;
+  226   3              }
+  227   2              
+  228   2              case TIM3_ENCOEDER:
+  229   2              {
+  230   3                  T3L = 0;
+  231   3                  T3H = 0;
+  232   3                  T4T3M |= 0x0c; // ÉèÖÃÍâ²¿¼ÆÊýÄ£Ê½²¢Æô¶¯¶¨Ê±Æ÷
+  233   3                  break;
+  234   3              }
+  235   2              
+  236   2              case TIM4_ENCOEDER:
+  237   2              {
+  238   3                  T4L = 0;
+  239   3                  T4H = 0;
+  240   3                  T4T3M |= 0xc0; // ÉèÖÃÍâ²¿¼ÆÊýÄ£Ê½²¢Æô¶¯¶¨Ê±Æ÷
+  241   3                  break;
+  242   3              }
+  243   2              
+  244   2              case TIM11_ENCOEDER:
+  245   2              {
+C251 COMPILER V5.60.0,  zf_driver_encoder                                                  11/06/25  16:16:29  PAGE 5   
+
+  246   3                  T11L = 0;
+  247   3                  T11H = 0;
+  248   3                  T11CR |= 0xc0; // ÉèÖÃÍâ²¿¼ÆÊýÄ£Ê½²¢Æô¶¯¶¨Ê±Æ÷
+  249   3                  break;
+  250   3              }
+  251   2          }
+  252   1      }
+  253          
+  254          
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       677     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        18     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        11     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

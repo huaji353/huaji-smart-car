@@ -1,0 +1,811 @@
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE command
+OBJECT MODULE PLACED IN .\out_file\command.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\command.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROWS
+                    -E INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\
+                    -user;..\code) DEBUG PRINT(.\out_file\command.lst) TABS(2) OBJECT(.\out_file\command.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          //横电感1 竖电感2 竖电感3 横电感4
+    3          float inductance_horizontal_1,inductance_vertical_2,inductance_vertical_3,inductance_horizontal_4,inducta
+             -nce_horizontal_middle;
+    4          float vcc;
+    5          uint8 encoder_integral_flag = 0;
+    6          int16 L_encoder = 0;
+    7          int16 R_encoder = 0;
+    8          int16 encoder_data_dir_1 = 0;
+    9          int16 encoder_data_dir_2 = 0;
+   10          uint32 encoder_integral_1  = 0;
+   11          uint32 encoder_integral_2  = 0;
+   12          float speed_L,speed_R;//左右轮目标速度
+   13          char txt[32];
+   14          uint8 eeprom_PID[]={
+   15          //角度环      P高位   P低位  P低2位       I高位  I低位  I低2位        D高位  D低位  D�
+             -��2位
+   16                        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,        0x00,  0x00,  0x00, 
+   17          //角速度环    P高位   P低位  P低2位       I高位  I低位  I低2位        D高位  D低位  D
+             -低2位
+   18                        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,
+   19          //左轮电机    P高位   P低位  P低2位       I高位  I低位  I低2位        D高位  D低位  D
+             -低2位
+   20                        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,
+   21          //右轮电机    P高位   P低位  P低2位       I高位  I低位  I低2位        D高位  D低位  D
+             -低2位
+   22                        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,
+   23          //预留参数                                                                               启动计数
+   24                        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,        0x00,  0x00,  0x00,  0x00
+   25          };//索引说明：
+   26          //eeprom_PID[0]~[8]为角度环P,I,D参数
+   27          //eeprom_PID[9]~[17]为角速度环P,I,D参数
+   28          //eeprom_PID[18]~[26]为左轮电机环P,I,D参数
+   29          //eeprom_PID[27]~[35]为右轮电机环P,I,D参数
+   30          //eeprom_PID[36]~[44]为预留参数
+   31          //eeprom_PID[45]为启动计数
+   32          uint8 inductance_max_min[]={
+   33          //  横电感1最大值          竖电感2最大值            竖电感3最大值           横电感4�
+             -��大值
+   34              0x00,0x00,0x00    ,    0x00,0x00,0x00    ,    0x00,0x00,0x00    ,    0x00,0x00,0x00 ,
+   35          //  横电感1最小值          竖电感2最小值            竖电感3最小值           横电感4�
+             -��小值
+   36              0x00,0x00,0x00    ,    0x00,0x00,0x00    ,    0x00,0x00,0x00    ,    0x00,0x00,0x00
+   37          };
+   38          //time采集
+   39          uint32 time_start;
+   40          uint32 time_end;
+   41          uint32 time_delta;
+   42          
+   43          //-------------------------------------------------------------------------------------------------------
+             -------------
+   44          // 函数简介     逐飞助手示波器初始化函数，用于初始化逐飞助手和无线串口输�
+             -��
+   45          // 参数说明     void
+   46          // 返回参数     void
+   47          // 使用示例     seekfree_assistant_oscilloscope_init();
+   48          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 2   
+
+             -------------
+   49          void seekfree_assistant_oscilloscope_init(void)
+   50          {
+   51   1          // 逐飞助手初始化
+   52   1        seekfree_assistant_init();
+   53   1        // 设置无线串口输出
+   54   1        seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_BLE6A20);
+   55   1      }
+   56          
+   57          //-------------------------------------------------------------------------------------------------------
+             -------------
+   58          // 函数简介     逐飞助手参数设置函数，用于调整PID参数和显示调试信息
+   59          // 参数说明     void
+   60          // 返回参数     void
+   61          // 使用示例     seekfree_assistant_set_parameter();
+   62          //-------------------------------------------------------------------------------------------------------
+             -------------
+   63          void seekfree_assistant_set_parameter(void)
+   64          {
+   65   1          switch((int)seekfree_assistant_parameter[0])//根据通道0的值选择要调的环
+   66   1          {
+   67   2              case 0:
+   68   2                  target_speed=seekfree_assistant_parameter[4];
+   69   2                  target_angle=seekfree_assistant_parameter[5];
+   70   2                  break;
+   71   2              case 1://角度环
+   72   2                  PID_angle_P=seekfree_assistant_parameter[1];
+   73   2                  PID_angle_I=seekfree_assistant_parameter[2];
+   74   2                  PID_angle_D=seekfree_assistant_parameter[3];
+   75   2                  target_speed=seekfree_assistant_parameter[4];
+   76   2                  target_angle=seekfree_assistant_parameter[5];
+   77   2                  PID_angle.kp=PID_angle_P;
+   78   2                  PID_angle.ki=PID_angle_I;
+   79   2                  PID_angle.kd=PID_angle_D;
+   80   2                  break;
+   81   2              case 2://角速度环
+   82   2                  PID_angle_speed_P=seekfree_assistant_parameter[1];
+   83   2                  PID_angle_speed_I=seekfree_assistant_parameter[2];
+   84   2                  PID_angle_speed_D=seekfree_assistant_parameter[3];
+   85   2                  target_speed=seekfree_assistant_parameter[4];
+   86   2                  target_angle=seekfree_assistant_parameter[5];
+   87   2                  PID_angle_speed.kp=PID_angle_speed_P;
+   88   2                  PID_angle_speed.ki=PID_angle_speed_I;
+   89   2                  PID_angle_speed.kd=PID_angle_speed_D;
+   90   2                  break;
+   91   2              case 3://左轮速度环
+   92   2                  PID_MOTOR_L_P=seekfree_assistant_parameter[1];
+   93   2                  PID_MOTOR_L_I=seekfree_assistant_parameter[2];
+   94   2                  PID_MOTOR_L_D=seekfree_assistant_parameter[3];
+   95   2                  target_speed=seekfree_assistant_parameter[4];
+   96   2                  target_angle=seekfree_assistant_parameter[5];
+   97   2                  PID_MOTOR_L.kp=PID_MOTOR_L_P;
+   98   2                  PID_MOTOR_L.ki=PID_MOTOR_L_I;
+   99   2                  PID_MOTOR_L.kd=PID_MOTOR_L_D;
+  100   2                  break;
+  101   2              case 4://右轮速度环
+  102   2                  PID_MOTOR_R_P=seekfree_assistant_parameter[1];
+  103   2                  PID_MOTOR_R_I=seekfree_assistant_parameter[2];
+  104   2                  PID_MOTOR_R_D=seekfree_assistant_parameter[3];
+  105   2                  target_speed=seekfree_assistant_parameter[4];
+  106   2                  target_angle=seekfree_assistant_parameter[5];
+  107   2                  PID_MOTOR_R.kp=PID_MOTOR_R_P;
+  108   2                  PID_MOTOR_R.ki=PID_MOTOR_R_I;
+  109   2                  PID_MOTOR_R.kd=PID_MOTOR_R_D;
+  110   2                  break;
+  111   2              case 5://保存参数
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 3   
+
+  112   2                  eeprom_write();
+  113   2                  seekfree_assistant_parameter[0]=0;
+  114   2                  break;
+  115   2              default:
+  116   2                  seekfree_assistant_parameter[0]=0;
+  117   2                  break;
+  118   2          }
+  119   1          switch((int)seekfree_assistant_parameter[7])//通道7选择显示模式
+  120   1          {
+  121   2              case 0:
+  122   2                  uart_printf(UART_4, "angle: %f, speed: %f, motor_L: %f, motor_R: %f\r\n", target_angle, targe
+             -t_speed, motor_output_L, motor_output_R);
+  123   2                  break;
+  124   2              case 1:
+  125   2                  uart_printf(UART_4, "PID_angle_P: %f, PID_angle_I: %f, PID_angle_D: %f\r\n", PID_angle_P, PID
+             -_angle_I, PID_angle_D);
+  126   2                  break;
+  127   2              case 2:
+  128   2                  uart_printf(UART_4, "PID_angle_speed_P: %f, PID_angle_speed_I: %f, PID_angle_speed_D: %f\r\n"
+             -, PID_angle_speed_P, PID_angle_speed_I, PID_angle_speed_D);
+  129   2                  break;
+  130   2              case 3:
+  131   2                  uart_printf(UART_4, "PID_MOTOR_L_P: %f, PID_MOTOR_L_I: %f, PID_MOTOR_L_D: %f\r\n", PID_MOTOR_
+             -L_P, PID_MOTOR_L_I, PID_MOTOR_L_D);
+  132   2                  break;
+  133   2              case 4:
+  134   2                  uart_printf(UART_4, "PID_MOTOR_R_P: %f, PID_MOTOR_R_I: %f, PID_MOTOR_R_D: %f\r\n", PID_MOTOR_
+             -R_P, PID_MOTOR_R_I, PID_MOTOR_R_D);
+  135   2                  break;
+  136   2              case 5://速度环调试修正
+  137   2                  uart_printf(UART_4, "encoder_data_dir_1: %d, encoder_data_dir_2: %d, motor_output_L: %f, moto
+             -r_output_R: %f ,speed: %f\r\n"
+  138   2                  , encoder_data_dir_1, encoder_data_dir_2, motor_output_L, motor_output_R, target_speed);
+  139   2                  speed_debug();
+  140   2                  break;
+  141   2              case 6://角度环调试修正
+  142   2                  uart_printf(UART_4, "encoder_data_dir_1: %d, encoder_data_dir_2: %d, motor_output_L: %f, moto
+             -r_output_R: %f ,angle: %f, yaw: %f, angle_output: %f, angle_speed_output: %f\r\n"
+  143   2                  , encoder_data_dir_1, encoder_data_dir_2, motor_output_L, motor_output_R, target_angle, euler
+             -.yaw ,angle_output,angle_speed_output);
+  144   2                  angle_debug();
+  145   2                  break;
+  146   2              case 7:
+  147   2                  uart_printf(UART_4, "inductance_horizontal_1: %f, inductance_vertical_2: %f, inductance_verti
+             -cal_3: %f, inductance_horizontal_4: %f\r\n"
+  148   2                  , inductance_horizontal_1, inductance_vertical_2, inductance_vertical_3, inductance_horizonta
+             -l_4);
+  149   2                  core_trace();
+  150   2                  break;
+  151   2              default:
+  152   2                  seekfree_assistant_parameter[7]=0;
+  153   2                  break;
+  154   2          }
+  155   1      }
+  156          
+  157          //-------------------------------------------------------------------------------------------------------
+             -------------
+  158          // 函数简介     逐飞助手示波器数据分析函数，用于处理和分析示波器数据
+  159          // 参数说明     void
+  160          // 返回参数     void
+  161          // 使用示例     seekfree_assistant_oscilloscope_code();
+  162          //-------------------------------------------------------------------------------------------------------
+             -------------
+  163          void seekfree_assistant_oscilloscope_code(void)
+  164          {
+  165   1        uint8 i;
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 4   
+
+  166   1          if(!seekfree_flag)return;
+  167   1          seekfree_assistant_data_analysis();
+  168   1          // 通过DEBUG串口输出数据
+  169   1          printf("receive data : ");
+  170   1          // 通过DEBUG串口输出参数
+  171   1          for(i = 0; i < SEEKFREE_ASSISTANT_SET_PARAMETR_COUNT; i++)
+  172   1          {
+  173   2              printf("%f ", seekfree_assistant_parameter[i]);
+  174   2          }
+  175   1          printf("\r\n");
+  176   1          seekfree_assistant_set_parameter();
+  177   1          // seekfree_assistant_oscilloscope_data.dat[0] = x;
+  178   1          // seekfree_assistant_oscilloscope_data.dat[1] = y;
+  179   1          // seekfree_assistant_oscilloscope_data.dat[2] = z;
+  180   1          // seekfree_assistant_oscilloscope_data.dat[3] = w;
+  181   1          // seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+  182   1      }
+  183          
+  184          //编码器函数定义区
+  185          //-------------------------------------------------------------------------------------------------------
+             -------------
+  186          // 函数简介     PIT 的周期中断处理函数 这个函数将在 PIT 对应的定时器中断调用
+             - 详见 isr.c
+  187          // 参数说明     void
+  188          // 返回参数     void
+  189          // 使用示例     pit_handler();
+  190          //-------------------------------------------------------------------------------------------------------
+             -------------
+  191          void pit_handler (void)
+  192          {
+  193   1          encoder_data_dir_1 = abs(encoder_get_count(ENCODER_DIR_1));                  // 获取编码器计数
+  194   1          encoder_data_dir_2 = abs(encoder_get_count(ENCODER_DIR_2));               // 获取编码器计数
+  195   1      
+  196   1          encoder_clear_count(ENCODER_DIR_1);                                   // 清空编码器计数
+  197   1          encoder_clear_count(ENCODER_DIR_2);                                 // 清空编码器计数
+  198   1      }
+  199          void encoder_init(void)
+  200          {
+  201   1          encoder_dir_init(ENCODER_DIR_1, ENCODER_DIR_DIR_1, ENCODER_DIR_PULSE_1);    // 初始化编码器模�
+             -��与引脚 带方向增量编码器模式
+  202   1          encoder_dir_init(ENCODER_DIR_2, ENCODER_DIR_DIR_2, ENCODER_DIR_PULSE_2);    // 初始化编码器模�
+             -��与引脚 带方向增量编码器模式
+  203   1                      // 设置定时器1中断回调函数
+  204   1        tim1_irq_handler = pit_handler;
+  205   1        
+  206   1          pit_ms_init(PIT_CH, 100);                                                   // 初始化 PIT 为周�
+             -�中断 100ms 周期
+  207   1      }
+  208          
+  209          //-------------------------------------------------------------------------------------------------------
+             -------------
+  210          // 函数简介     编码器积分函数，用于累加编码器计数值
+  211          // 参数说明     void
+  212          // 返回参数     void
+  213          // 使用示例     encoder_integrate();
+  214          //-------------------------------------------------------------------------------------------------------
+             -------------
+  215          void encoder_integrate(void)
+  216          {
+  217   1          if(encoder_integral_flag){
+  218   2          encoder_integral_1  += encoder_data_dir_1;
+  219   2          encoder_integral_2  += encoder_data_dir_2;
+  220   2          }
+  221   1      }
+  222          
+  223          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 5   
+
+             -------------
+  224          // 函数简介     编码器数据显示函数，用于在IPS屏幕上显示编码器数据
+  225          // 参数说明     void
+  226          // 返回参数     void
+  227          // 使用示例     encoder_text();
+  228          //-------------------------------------------------------------------------------------------------------
+             -------------
+  229          void encoder_text(void)
+  230          {
+  231   1          sprintf(txt, "encoder1: %5d", encoder_data_dir_1);
+  232   1          ips200_show_string(0,0,txt);
+  233   1          sprintf(txt, "encoder2: %5d", encoder_data_dir_2);
+  234   1          ips200_show_string(0,16,txt);
+  235   1      }
+  236          
+  237          //蜂鸣器函数定义区
+  238          //-------------------------------------------------------------------------------------------------------
+             -------------
+  239          // 函数简介     蜂鸣器控制函数，用于控制蜂鸣器发声时间
+  240          // 参数说明     time: 蜂鸣器发声时间(ms)
+  241          // 返回参数     void
+  242          // 使用示例     buzzer_time(100);
+  243          //-------------------------------------------------------------------------------------------------------
+             -------------
+  244          void buzzer_time(uint16 time)
+  245          {
+  246   1          gpio_set_level(IO_P07, 1);
+  247   1          system_delay_ms(time);
+  248   1          gpio_set_level(IO_P07, 0);
+  249   1          system_delay_ms(time);
+  250   1      }
+  251          
+  252          //霍尔函数定义区
+  253          //-------------------------------------------------------------------------------------------------------
+             -------------
+  254          // 函数简介     霍尔传感器初始化函数，用于初始化霍尔传感器引脚
+  255          // 参数说明     void
+  256          // 返回参数     void
+  257          // 使用示例     hall_init();
+  258          //-------------------------------------------------------------------------------------------------------
+             -------------
+  259          void hall_init(void)
+  260          {
+  261   1          gpio_init(HALL_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+  262   1      }
+  263          
+  264          //-------------------------------------------------------------------------------------------------------
+             -------------
+  265          // 函数简介     霍尔传感器数据显示函数，用于在IPS屏幕上显示霍尔传感器状态
+  266          // 参数说明     void
+  267          // 返回参数     void
+  268          // 使用示例     hall_text();
+  269          //-------------------------------------------------------------------------------------------------------
+             -------------
+  270          void hall_text(void)
+  271          {
+  272   1          sprintf(txt, "hall: %d", gpio_get_level(HALL_PIN));
+  273   1          ips200_show_string(0,0,txt);
+  274   1      }   
+  275          
+  276          //ADC函数定义区
+  277          //-------------------------------------------------------------------------------------------------------
+             -------------
+  278          // 函数简介     ADC初始化函数，用于初始化所有ADC通道
+  279          // 参数说明     void
+  280          // 返回参数     void
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 6   
+
+  281          // 使用示例     adc_main_init();
+  282          //-------------------------------------------------------------------------------------------------------
+             -------------
+  283          void adc_main_init(void)
+  284          {
+  285   1          adc_init(ADC_CHANNEL1, ADC_12BIT);                                          // 初始化对应 ADC �
+             -�道为对应精度
+  286   1          adc_init(ADC_CHANNEL2, ADC_12BIT);                                          // 初始化对应 ADC �
+             -�道为对应精度
+  287   1          adc_init(ADC_CHANNEL3, ADC_12BIT);                                          // 初始化对应 ADC �
+             -�道为对应精度
+  288   1          adc_init(ADC_CHANNEL4, ADC_12BIT);                                           // 初始化对应 ADC �
+             -��道为对应精度
+  289   1          adc_init(ADC_CHANNEL5, ADC_12BIT);                                           // 初始化对应 ADC �
+             -��道为对应精度
+  290   1          adc_init(ADC_CHANNEL6, ADC_12BIT);                                           // 初始化对应 ADC �
+             -��道为对应精度
+  291   1      }
+  292          
+  293          //-------------------------------------------------------------------------------------------------------
+             -------------
+  294          // 函数简介     ADC数据读取函数，用于读取所有电感值和电压值
+  295          // 参数说明     void
+  296          // 返回参数     void
+  297          // 使用示例     adc_main_read();
+  298          //-------------------------------------------------------------------------------------------------------
+             -------------
+  299          void adc_main_read(void)
+  300          {
+  301   1          inductance_horizontal_1= (float)adc_convert(ADC_CHANNEL1);
+  302   1          inductance_vertical_2= (float)adc_convert(ADC_CHANNEL2);
+  303   1          inductance_horizontal_middle =(float)adc_convert(ADC_CHANNEL6);
+  304   1          inductance_vertical_3= (float)adc_convert(ADC_CHANNEL3);
+  305   1          inductance_horizontal_4= (float)adc_convert(ADC_CHANNEL4);
+  306   1          vcc= (float)adc_convert(ADC_CHANNEL5);  
+  307   1          // seekfree_assistant_oscilloscope_code(adc1,adc2,adc3,adc4);
+  308   1      }
+  309          
+  310          //-------------------------------------------------------------------------------------------------------
+             -------------
+  311          // 函数简介     ADC数据显示函数，用于在IPS屏幕上显示ADC数据
+  312          // 参数说明     void
+  313          // 返回参数     void
+  314          // 使用示例     adc_text();
+  315          //-------------------------------------------------------------------------------------------------------
+             -------------
+  316          void adc_text(void)
+  317          {
+  318   1          sprintf(txt, "inductance_horizontal_1: %08.2f", inductance_horizontal_1);
+  319   1          ips200_show_string(0,0,txt);
+  320   1          sprintf(txt, "inductance_vertical_2: %08.2f", inductance_vertical_2);
+  321   1          ips200_show_string(0,16,txt);
+  322   1          sprintf(txt, "inductance_vertical_3: %08.2f", inductance_vertical_3);
+  323   1          ips200_show_string(0,32,txt);
+  324   1          sprintf(txt, "inductance_horizontal_4: %08.2f", inductance_horizontal_4);
+  325   1          ips200_show_string(0,48,txt);
+  326   1          sprintf(txt, "inductance_horizontal_m: %08.2f", inductance_horizontal_middle);
+  327   1          ips200_show_string(0,64,txt); 
+  328   1          sprintf(txt, "horizontal_diff_ratio_sum: %.2f", horizontal_diff_ratio_sum);
+  329   1          ips200_show_string(0,80,txt);
+  330   1          sprintf(txt, "vertical_diff_ratio_sum: %.2f", vertical_diff_ratio_sum);
+  331   1          ips200_show_string(0,96,txt);
+  332   1      }
+  333          
+  334          //IPS200函数定义区
+  335          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 7   
+
+             -------------
+  336          // 函数简介     IPS显示测试函数，用于测试IPS显示功能
+  337          // 参数说明     void
+  338          // 返回参数     void
+  339          // 使用示例     ips_text();
+  340          //-------------------------------------------------------------------------------------------------------
+             -------------
+  341          void ips_text(void)
+  342          {
+  343   1        ips200_show_string(0,0,"HI,this is a test");
+  344   1      }
+  345          
+  346          //-------------------------------------------------------------------------------------------------------
+             -------------
+  347          // 函数简介     串口打印函数，用于通过串口输出格式化字符串
+  348          // 参数说明     uart_n: 串口编号
+  349          //              format: 格式化字符串
+  350          //              ...: 可变参数列表
+  351          // 返回参数     void
+  352          // 使用示例     uart_printf(UART_4, "test: %d", 123);
+  353          //-------------------------------------------------------------------------------------------------------
+             -------------
+  354          void uart_printf(uart_index_enum uart_n,const char* format,...)
+  355          {
+  356   1        char buffer[256];
+  357   1        va_list args;
+  358   1        va_start(args,format);
+  359   1        vsprintf(buffer,format,args);
+  360   1        uart_write_string (uart_n, buffer);
+  361   1        va_end(args);
+  362   1      }
+  363          
+  364          //-------------------------------------------------------------------------------------------------------
+             -------------
+  365          // 函数简介     串口打印测试函数，用于测试串口通信功能
+  366          // 参数说明     void
+  367          // 返回参数     void
+  368          // 使用示例     uart_printf_test();
+  369          //-------------------------------------------------------------------------------------------------------
+             -------------
+  370          void uart_printf_test(void)
+  371          {
+  372   1          uint8 data_len = 0;
+  373   1          uart_printf(UART_4, "test, %d\n", 123);
+  374   1          data_len = ble6a20_read_buffer(txt, 16);
+  375   1          if(data_len > 0)
+  376   1          {   
+  377   2              uart_printf(UART_4, "data_len: %d\n", data_len);
+  378   2              uart_printf(UART_4, "recv txt: %s\n", txt);
+  379   2          }
+  380   1          system_delay_ms(100);
+  381   1      }
+  382          
+  383          //-------------------------------------------------------------------------------------------------------
+             -------------
+  384          // 函数简介     电压显示函数，用于在屏幕上显示当前电压值
+  385          // 参数说明     void
+  386          // 返回参数     void
+  387          // 使用示例     display_vcc();
+  388          //-------------------------------------------------------------------------------------------------------
+             -------------
+  389          void display_vcc(void) {
+  390   1          // 格式化电压字符串
+  391   1          vcc= adc_convert(ADC_CHANNEL5)/10.491;
+  392   1      #if VCC_ALARM_FLAG
+                   if(vcc<11.1&&vcc>1.5){
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 8   
+
+                       buzzer_time(100);
+                   }
+               #endif  
+  397   1          sprintf(txt, "VCC: %.2fV", vcc) ;
+  398   1          // 在屏幕右上角显示VCC值
+  399   1          ips200_show_string(150, 10, txt);
+  400   1      }
+  401          //-------------------------------------------------------------------------------------------------------
+             -------------
+  402          // 函数简介     电感值写入EEPROM函数，用于存储电感的最大最小值
+  403          // 参数说明     void
+  404          // 返回参数     void
+  405          // 使用示例     eeprom_write_inductance_max_min();
+  406          //-------------------------------------------------------------------------------------------------------
+             -------------
+  407          void eeprom_write_inductance_max_min(void)
+  408          {
+  409   1          uint32 hex_value;
+  410   1      
+  411   1          hex_value = (uint32)inductance_horizontal_1_max;
+  412   1          inductance_max_min[0] = (uint8)(hex_value >> 16);
+  413   1          inductance_max_min[1] = (uint8)(hex_value >> 8);
+  414   1          inductance_max_min[2] = (uint8)(hex_value);
+  415   1      
+  416   1          hex_value = (uint32)inductance_vertical_2_max;
+  417   1          inductance_max_min[3] = (uint8)(hex_value >> 16);
+  418   1          inductance_max_min[4] = (uint8)(hex_value >> 8);
+  419   1          inductance_max_min[5] = (uint8)(hex_value);
+  420   1          
+  421   1          hex_value = (uint32)inductance_vertical_3_max;
+  422   1          inductance_max_min[6] = (uint8)(hex_value >> 16);
+  423   1          inductance_max_min[7] = (uint8)(hex_value >> 8);
+  424   1          inductance_max_min[8] = (uint8)(hex_value);
+  425   1          
+  426   1          hex_value = (uint32)inductance_horizontal_4_max;
+  427   1          inductance_max_min[9] = (uint8)(hex_value >> 16);
+  428   1          inductance_max_min[10] = (uint8)(hex_value >> 8);
+  429   1          inductance_max_min[11] = (uint8)(hex_value);
+  430   1          
+  431   1          // 存储最小值
+  432   1          hex_value = (uint32)inductance_horizontal_1_min;
+  433   1          inductance_max_min[12] = (uint8)(hex_value >> 16);
+  434   1          inductance_max_min[13] = (uint8)(hex_value >> 8);
+  435   1          inductance_max_min[14] = (uint8)(hex_value);
+  436   1          
+  437   1          hex_value = (uint32)inductance_vertical_2_min;
+  438   1          inductance_max_min[15] = (uint8)(hex_value >> 16);
+  439   1          inductance_max_min[16] = (uint8)(hex_value >> 8);
+  440   1          inductance_max_min[17] = (uint8)(hex_value);
+  441   1          
+  442   1          hex_value = (uint32)inductance_vertical_3_min;
+  443   1          inductance_max_min[18] = (uint8)(hex_value >> 16);
+  444   1          inductance_max_min[19] = (uint8)(hex_value >> 8);
+  445   1          inductance_max_min[20] = (uint8)(hex_value);
+  446   1          
+  447   1          hex_value = (uint32)inductance_horizontal_4_min;
+  448   1          inductance_max_min[21] = (uint8)(hex_value >> 16);
+  449   1          inductance_max_min[22] = (uint8)(hex_value >> 8);
+  450   1          inductance_max_min[23] = (uint8)(hex_value);
+  451   1          // 写入EEPROM（从地址eeprom后开始，避开PID参数区域）
+  452   1          iap_write_buff(sizeof(eeprom_PID)+1, inductance_max_min, sizeof(inductance_max_min));
+  453   1      }
+  454          
+  455          //EEPROM写入函数定义区
+  456          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 9   
+
+  457          // 函数简介     EEPROM写入函数，用于将PID参数写入EEPROM
+  458          // 参数说明     void
+  459          // 返回参数     void
+  460          // 使用示例     eeprom_write();
+  461          //-------------------------------------------------------------------------------------------------------
+             -------------
+  462          void eeprom_write(void)
+  463          {
+  464   1          uint8 i;
+  465   1          float temp_value;
+  466   1          uint32 hex_value;
+  467   1          
+  468   1          // 循环存储所有15个PID参数（5组，每组3个参数）
+  469   1          for(i = 0; i < 15; i++) {
+  470   2              // 根据索引选择对应的PID参数
+  471   2              if(i == 0) temp_value = PID_angle_P;
+  472   2              else if(i == 1) temp_value = PID_angle_I;
+  473   2              else if(i == 2) temp_value = PID_angle_D;
+  474   2              else if(i == 3) temp_value = PID_angle_speed_P;
+  475   2              else if(i == 4) temp_value = PID_angle_speed_I;
+  476   2              else if(i == 5) temp_value = PID_angle_speed_D;
+  477   2              else if(i == 6) temp_value = PID_MOTOR_L_P;
+  478   2              else if(i == 7) temp_value = PID_MOTOR_L_I;
+  479   2              else if(i == 8) temp_value = PID_MOTOR_L_D;
+  480   2              else if(i == 9) temp_value = PID_MOTOR_R_P;
+  481   2              else if(i == 10) temp_value = PID_MOTOR_R_I;
+  482   2              else if(i == 11) temp_value = PID_MOTOR_R_D;
+  483   2              // 预留3个参数位置供未来扩展
+  484   2              else if(i == 12) temp_value = 0.0f;
+  485   2              else if(i == 13) temp_value = 0.0f;
+  486   2              else if(i == 14) temp_value = 0.0f;
+  487   2              
+  488   2              // 将浮点数转换为32位整数（保留4位小数精度）
+  489   2              hex_value = (uint32)(temp_value * 100000.0f);
+  490   2              
+  491   2              // 存储到EEPROM数组（每个参数占用4字节）
+  492   2              eeprom_PID[i*3] = (uint8)(hex_value >> 16);        // 最高字节
+  493   2              eeprom_PID[i*3+1] = (uint8)(hex_value >> 8);       // 次低字节
+  494   2              eeprom_PID[i*3+2] = (uint8)(hex_value);            // 最低字节
+  495   2          }
+  496   1          eeprom_PID[45] = 0x00; // 启动计数，位置变为45 (15*3)
+  497   1      
+  498   1          // 写入所有PID参数
+  499   1          iap_write_buff(0, eeprom_PID, sizeof(eeprom_PID));
+  500   1      }
+  501          
+  502          
+  503          //读取电感最大值最小值
+  504          //-------------------------------------------------------------------------------------------------------
+             -------------
+  505          // 函数简介     电感值读取函数，用于从EEPROM读取电感的最大最小值
+  506          // 参数说明     void
+  507          // 返回参数     void
+  508          // 使用示例     eeprom_read_inductance_max_min();
+  509          //-------------------------------------------------------------------------------------------------------
+             -------------
+  510          void eeprom_read_inductance_max_min(void)
+  511          {
+  512   1          uint32 hex_value;
+  513   1          
+  514   1          // 从EEPROM读取数据（从地址 sizeof(eeprom_PID)+1 开始）
+  515   1          iap_read_buff(sizeof(eeprom_PID)+1, inductance_max_min, sizeof(inductance_max_min));
+  516   1          
+  517   1          // 读取并转换最大值
+  518   1          hex_value = ((uint32)inductance_max_min[0] << 16) |
+  519   1                      ((uint32)inductance_max_min[1] << 8) |
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 10  
+
+  520   1                      ((uint32)inductance_max_min[2]);
+  521   1          inductance_horizontal_1_max = (float)hex_value;
+  522   1          
+  523   1          hex_value = ((uint32)inductance_max_min[3] << 16) |
+  524   1                      ((uint32)inductance_max_min[4] << 8) |
+  525   1                      ((uint32)inductance_max_min[5]);
+  526   1          inductance_vertical_2_max = (float)hex_value;
+  527   1          
+  528   1          hex_value = ((uint32)inductance_max_min[6] << 16) |
+  529   1                      ((uint32)inductance_max_min[7] << 8) |
+  530   1                      ((uint32)inductance_max_min[8]);
+  531   1          inductance_vertical_3_max = (float)hex_value;
+  532   1          
+  533   1          hex_value = ((uint32)inductance_max_min[9] << 16) |
+  534   1                      ((uint32)inductance_max_min[10] << 8) |
+  535   1                      ((uint32)inductance_max_min[11]);
+  536   1          inductance_horizontal_4_max = (float)hex_value;
+  537   1          
+  538   1          // 读取并转换最小值
+  539   1          hex_value = ((uint32)inductance_max_min[12] << 16) |
+  540   1                      ((uint32)inductance_max_min[13] << 8) |
+  541   1                      ((uint32)inductance_max_min[14]);
+  542   1          inductance_horizontal_1_min = (float)hex_value;
+  543   1          
+  544   1          hex_value = ((uint32)inductance_max_min[15] << 16) |
+  545   1                      ((uint32)inductance_max_min[16] << 8) |
+  546   1                      ((uint32)inductance_max_min[17]);
+  547   1          inductance_vertical_2_min = (float)hex_value;
+  548   1          
+  549   1          hex_value = ((uint32)inductance_max_min[18] << 16) |
+  550   1                      ((uint32)inductance_max_min[19] << 8) |
+  551   1                      ((uint32)inductance_max_min[20]);
+  552   1          inductance_vertical_3_min = (float)hex_value;
+  553   1          
+  554   1          hex_value = ((uint32)inductance_max_min[21] << 16) |
+  555   1                      ((uint32)inductance_max_min[22] << 8) |
+  556   1                      ((uint32)inductance_max_min[23]);
+  557   1          inductance_horizontal_4_min = (float)hex_value;
+  558   1      }
+  559          
+  560          //擦除eeprom缓冲区
+  561          //-------------------------------------------------------------------------------------------------------
+             -------------
+  562          // 函数简介     EEPROM擦除函数，用于清除EEPROM中的数据
+  563          // 参数说明     void
+  564          // 返回参数     void
+  565          // 使用示例     eeprom_erase();
+  566          //-------------------------------------------------------------------------------------------------------
+             -------------
+  567          void eeprom_erase(void)
+  568          {
+  569   1          // uint8 i;
+  570   1          iap_erase_page(200);
+  571   1          // // 擦除PID参数区域
+  572   1          // for(i = 0; i < 45; i++) {
+  573   1          //     eeprom_PID[i] = 0x00;
+  574   1          // }
+  575   1          // eeprom_PID[45] = 0x00; // 启动计数
+  576   1          
+  577   1          // // 擦除电感值区域
+  578   1          // for(i = 0; i < 24; i++) {
+  579   1          //     inductance_max_min[i] = 0x00;
+  580   1          // }
+  581   1          
+  582   1          // 写入擦除后的数据
+  583   1          // iap_write_buff(0, eeprom_PID, sizeof(eeprom_PID));
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 11  
+
+  584   1          // iap_write_buff(sizeof(eeprom_PID)+1, inductance_max_min, sizeof(inductance_max_min));
+  585   1      }
+  586          
+  587          //-------------------------------------------------------------------------------------------------------
+             -------------
+  588          // 函数简介     EEPROM初始化函数，用于初始化EEPROM并读取存储的参数
+  589          // 参数说明     void
+  590          // 返回参数     void
+  591          // 使用示例     eeprom_init_code();
+  592          //-------------------------------------------------------------------------------------------------------
+             -------------
+  593          void eeprom_init_code(void)
+  594          {
+  595   1          uint8 i;
+  596   1          float temp_value;
+  597   1          uint32 hex_value;
+  598   1          
+  599   1          iap_init();
+  600   1          iap_read_buff(0x00, eeprom_PID, sizeof(eeprom_PID));//读取eeprom_PID
+  601   1          if(eeprom_PID[45] != 0x00)
+  602   1          {
+  603   2                  // 擦除EEPROM页
+  604   2              iap_erase_page(200);
+  605   2              eeprom_write();
+  606   2              eeprom_write_inductance_max_min(); // 写入电感值
+  607   2              iap_read_buff(0x00, eeprom_PID, sizeof(eeprom_PID));//读取eeprom_PID
+  608   2      
+  609   2              
+  610   2          }
+  611   1                      // 读取电感值
+  612   1          eeprom_read_inductance_max_min();
+  613   1      
+  614   1          
+  615   1          // 循环将EEPROM中的数据转换回PID参数
+  616   1          for(i = 0; i < 15; i++) {
+  617   2              // 从EEPROM中读取32位整数
+  618   2              hex_value = ((uint32)eeprom_PID[i*3] << 16) |
+  619   2                         ((uint32)eeprom_PID[i*3+1] << 8) |
+  620   2                         ((uint32)eeprom_PID[i*3+2]);
+  621   2              
+  622   2              // 转换回浮点数（除以100000得到原始值）
+  623   2              temp_value = (float)hex_value / 100000.0f;
+  624   2              
+  625   2              // 根据索引将值赋给对应的PID参数
+  626   2              if(i == 0) PID_angle_P = temp_value;
+  627   2              else if(i == 1) PID_angle_I = temp_value;
+  628   2              else if(i == 2) PID_angle_D = temp_value;
+  629   2              else if(i == 3) PID_angle_speed_P = temp_value;
+  630   2              else if(i == 4) PID_angle_speed_I = temp_value;
+  631   2              else if(i == 5) PID_angle_speed_D = temp_value;
+  632   2              else if(i == 6) PID_MOTOR_L_P = temp_value;
+  633   2              else if(i == 7) PID_MOTOR_L_I = temp_value;
+  634   2              else if(i == 8) PID_MOTOR_L_D = temp_value;
+  635   2              else if(i == 9) PID_MOTOR_R_P = temp_value;
+  636   2              else if(i == 10) PID_MOTOR_R_I = temp_value;
+  637   2              else if(i == 11) PID_MOTOR_R_D = temp_value;
+  638   2              // 其余参数暂不处理
+  639   2          }
+  640   1      }
+  641          
+  642          //初始化函数定义区
+  643          //-------------------------------------------------------------------------------------------------------
+             -------------
+  644          // 函数简介     系统初始化函数，用于初始化所有外设和系统参数
+  645          // 参数说明     void
+  646          // 返回参数     void
+C251 COMPILER V5.60.0,  command                                                            12/06/25  20:04:03  PAGE 12  
+
+  647          // 使用示例     to_init();
+  648          //-------------------------------------------------------------------------------------------------------
+             -------------
+  649          void to_init(void)
+  650          {
+  651   1          ips200_init();
+  652   1          key_into();                             // 初始化按键
+  653   1          encoder_init();
+  654   1          menu_init();                           // 初始化菜单系统
+  655   1          menu_display();                        // 首次显示菜单   
+  656   1          gpio_init(IO_P07, GPO, 0, GPO_PUSH_PULL);//初始化蜂鸣器
+  657   1          gpio_init(HALL_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);;//初始化霍尔传感器
+  658   1          adc_main_init();//初始化ADC
+  659   1          while(ble6a20_init())
+  660   1          {
+  661   2              system_delay_ms(100);
+  662   2              printf("wifi init error\n");
+  663   2          }
+  664   1          imu660ra_init();
+  665   1          quaternion_init(); // 初始化四元数
+  666   1          gyro_calibrate(200);
+  667   1          //初始化逐飞助手
+  668   1          seekfree_assistant_oscilloscope_init();
+  669   1          //初始化eeprom
+  670   1          eeprom_init_code();
+  671   1          //初始化串口
+  672   1          ble6a20_init();
+  673   1          PidInit();
+  674   1          control_init();
+  675   1          //初始化任务
+  676   1      
+  677   1          pit_ms_init(TIM4_PIT, 1);
+  678   1          tim4_irq_handler=set_task_mode;
+  679   1          pit_ms_init(TIM11_PIT, 5);
+  680   1          tim11_irq_handler=imu_isr;
+  681   1      
+  682   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      5664     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       499     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =      1145     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

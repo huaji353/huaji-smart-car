@@ -1,0 +1,1068 @@
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_device_dl1a
+OBJECT MODULE PLACED IN .\out_file\zf_device_dl1a.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_device\zf_device_dl1a.c LARGE NOALIAS WARNINGLEVEL(
+                    -3) OPTIMIZE(0,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\.
+                    -.\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_device_dl1a.lst) TABS(2) OBJECT(.\out_file\zf_device_dl
+                    -1a.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源
+             -库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许
+             -可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修�
+             -�它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本
+             -声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          /********************************************************************************************************
+             -*************
+   36          * 接线定义：
+   37          *                   ------------------------------------
+   38          *                   模块管脚            单片机管脚
+   39          *                   SCL                 查看 zf_device_dl1a.h 中 DL1A_SCL_PIN  宏定义
+   40          *                   SDA                 查看 zf_device_dl1a.h 中 DL1A_SDA_PIN  宏定义
+   41          *                   XS                  查看 zf_device_dl1a.h 中 DL1A_XS_PIN   宏定义
+   42          *                   VCC                 5V 电源
+   43          *                   GND                 电源地
+   44          *                   ------------------------------------
+   45          *********************************************************************************************************
+             -***********/
+   46          
+   47          #include "zf_common_debug.h"
+   48          #include "zf_driver_delay.h"
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 2   
+
+   49          #include "zf_driver_soft_iic.h"
+   50          #include "zf_device_dl1a.h"
+   51          #include "zf_device_type.h"
+   52          
+   53          #pragma warning disable = 183
+   54          
+   55          static  uint8   dl1a_init_flag = 0;
+   56          uint8 dl1a_finsh_flag = 0;
+   57          uint16 dl1a_distance_mm = 8192;
+   58          
+   59          #if DL1A_USE_SOFT_IIC
+   60          static soft_iic_info_struct dl1a_iic_struct;
+   61          
+   62          #define dl1a_write_array(dat, len)          (soft_iic_write_8bit_array(&dl1a_iic_struct, (dat), (len)))
+   63          #define dl1a_write_register(reg, dat)       (soft_iic_write_8bit_register(&dl1a_iic_struct, (reg), (dat))
+             -)
+   64          #define dl1a_read_register(reg)              (soft_iic_read_8bit_register(&dl1a_iic_struct, (reg)))
+   65          #define dl1a_read_registers(reg, dat, len)  (soft_iic_read_8bit_registers(&dl1a_iic_struct, (reg), (dat),
+             - (len)))
+   66          #else
+               #define dl1a_write_array(dat, len)          (iic_write_8bit_array(DL1A_IIC, DL1A_DEV_ADDR, (dat), (len)))
+               #define dl1a_write_register(reg, dat)       (iic_write_8bit_register(DL1A_IIC, DL1A_DEV_ADDR, (reg), (dat
+             -)))
+               #define dl1a_read_register(reg)              (iic_read_8bit_register(DL1A_IIC, DL1A_DEV_ADDR, (reg)))
+               #define dl1a_read_registers(reg, dat, len)  (iic_read_8bit_registers(DL1A_IIC, DL1A_DEV_ADDR, (reg), (dat
+             -), (len)))
+               #endif
+   72          
+   73          // 这个速率表示从目标反射并被设备检测到的信号的振幅
+   74          // 设置此限制可以确定传感器报告有效读数所需的最小测量值
+   75          // 设置一个较低的限制可以增加传感器的测量范围
+   76          // 但似乎也增加了 <由于来自目标以外的物体的不需要的反射导致> 得到不准确�
+             -�数的可能性
+   77          // 默认为 0.25 MCPS 可预设范围为 0 - 511.99
+   78          #define DL1A_DEFAULT_RATE_LIMIT  (0.25)
+   79          
+   80          // 从寄存器数据解码 PCLKs 中 VCSEL (vertical cavity surface emitting laser) 的脉宽周期
+   81          #define decode_vcsel_period(reg_val)            (((reg_val) + 1) << 1)
+   82          
+   83          // 从 PCLK 中的 VCSEL 周期计算宏周期 (以 *纳秒为单位)
+   84          // PLL_period_ps = 1655
+   85          // macro_period_vclks = 2304
+   86          #define calc_macro_period(vcsel_period_pclks)   ((((uint32)2304 * (vcsel_period_pclks) * 1655) + 500) / 1
+             -000)
+   87          
+   88          //-------------------------------------------------------------------------------------------------------
+             -------------
+   89          // 函数简介     获取设备 SPAD 信息
+   90          // 参数说明     index           索引
+   91          // 参数说明     type            类型值
+   92          // 返回参数     uint8           是否成功 0-成功 1-失败
+   93          // 使用示例     dl1a_get_spad_info(index, type_is_aperture);
+   94          // 备注信息
+   95          //-------------------------------------------------------------------------------------------------------
+             -------------
+   96          static uint8 dl1a_get_spad_info (uint8 *index, uint8 *type_is_aperture)
+   97          {
+   98   1          uint8 tmp = 0;
+   99   1          uint8 return_state = 0;
+  100   1          volatile uint16 loop_count = 0;
+  101   1          
+  102   1          do
+  103   1          {
+  104   2              dl1a_write_register(0x80, 0x01);
+  105   2              dl1a_write_register(0xFF, 0x01);
+  106   2              dl1a_write_register(0x00, 0x00);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 3   
+
+  107   2              
+  108   2              dl1a_write_register(0xFF, 0x06);
+  109   2              dl1a_read_registers(0x83, &tmp, 1);
+  110   2              dl1a_write_register(0x83, tmp | 0x04);
+  111   2              dl1a_write_register(0xFF, 0x07);
+  112   2              dl1a_write_register(0x81, 0x01);
+  113   2              
+  114   2              dl1a_write_register(0x80, 0x01);
+  115   2              
+  116   2              dl1a_write_register(0x94, 0x6b);
+  117   2              dl1a_write_register(0x83, 0x00);
+  118   2              
+  119   2              tmp = 0x00;
+  120   2              
+  121   2              while(0x00 == tmp || 0xFF == tmp)
+  122   2              {
+  123   3                  system_delay_ms(1);
+  124   3                  dl1a_read_registers(0x83, &tmp, 1);
+  125   3                  
+  126   3                  if(DL1A_TIMEOUT_COUNT < loop_count ++)
+  127   3                  {
+  128   4                      return_state = 1;
+  129   4                      break;
+  130   4                  }
+  131   3                  
+  132   3              }
+  133   2              
+  134   2              if(return_state)
+  135   2              {
+  136   3                  break;
+  137   3              }
+  138   2              
+  139   2              dl1a_write_register(0x83, 0x01);
+  140   2              dl1a_read_registers(0x92, &tmp, 1);
+  141   2              
+  142   2              *index = tmp & 0x7f;
+  143   2              *type_is_aperture = (tmp >> 7) & 0x01;
+  144   2              
+  145   2              dl1a_write_register(0x81, 0x00);
+  146   2              dl1a_write_register(0xFF, 0x06);
+  147   2              dl1a_read_registers(0x83, &tmp, 1);
+  148   2              dl1a_write_register(0x83, tmp);
+  149   2              dl1a_write_register(0xFF, 0x01);
+  150   2              dl1a_write_register(0x00, 0x01);
+  151   2              
+  152   2              dl1a_write_register(0xFF, 0x00);
+  153   2              dl1a_write_register(0x80, 0x00);
+  154   2          }
+  155   1          while(0);
+  156   1          
+  157   1          return return_state;
+  158   1      }
+  159          
+  160          //-------------------------------------------------------------------------------------------------------
+             -------------
+  161          // 函数简介     将超时数值从 MCLKs 转换到对应的 ms
+  162          // 参数说明     timeout_period_mclks    超时周期 MCLKs
+  163          // 参数说明     vcsel_period_pclks      PCLK 值
+  164          // 返回参数     uint32                  返回超时数值
+  165          // 使用示例     dl1a_timeout_mclks_to_microseconds(timeout_period_mclks, vcsel_period_pclks);
+  166          // 备注信息     将序列步骤超时从具有给定 VCSEL 周期的 MCLK (以 PCLK 为单位)转换�
+             -��微秒
+  167          //-------------------------------------------------------------------------------------------------------
+             -------------
+  168          static uint32 dl1a_timeout_mclks_to_microseconds (uint16 timeout_period_mclks, uint8 vcsel_period_pclks)
+  169          {
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 4   
+
+  170   1          uint32 macro_period_ns = calc_macro_period(vcsel_period_pclks);
+  171   1          
+  172   1          return ((timeout_period_mclks * macro_period_ns) + (macro_period_ns / 2)) / 1000;
+  173   1      }
+  174          
+  175          //-------------------------------------------------------------------------------------------------------
+             -------------
+  176          // 函数简介     将超时数值从 ms 转换到对应的 MCLKs
+  177          // 参数说明     timeout_period_us   超时周期 微秒单位
+  178          // 参数说明     vcsel_period_pclks  PCLK 值
+  179          // 返回参数     uint32              返回超时数值
+  180          // 使用示例     dl1a_timeout_microseconds_to_mclks(timeout_period_us, vcsel_period_pclks);
+  181          // 备注信息     将序列步骤超时从微秒转换为具有给定 VCSEL 周期的 MCLK (以 PCLK �
+             -�单位)
+  182          //-------------------------------------------------------------------------------------------------------
+             -------------
+  183          static uint32 dl1a_timeout_microseconds_to_mclks (uint32 timeout_period_us, uint8 vcsel_period_pclks)
+  184          {
+  185   1          uint32 macro_period_ns = calc_macro_period(vcsel_period_pclks);
+  186   1          
+  187   1          return (((timeout_period_us * 1000) + (macro_period_ns / 2)) / macro_period_ns);
+  188   1      }
+  189          
+  190          //-------------------------------------------------------------------------------------------------------
+             -------------
+  191          // 函数简介     对超时数值进行解码
+  192          // 参数说明     reg_val         超时时长 寄存器值
+  193          // 返回参数     uint16          返回超时数值
+  194          // 使用示例     dl1a_decode_timeout(reg_val);
+  195          // 备注信息     从寄存器值解码 MCLK 中的序列步骤超时
+  196          //-------------------------------------------------------------------------------------------------------
+             -------------
+  197          static uint16 dl1a_decode_timeout (uint16 reg_val)
+  198          {
+  199   1          // 格式: (LSByte * 2 ^ MSByte) + 1
+  200   1          return  (uint16)((reg_val & 0x00FF) <<
+  201   1                           (uint16)((reg_val & 0xFF00) >> 8)) + 1;
+  202   1      }
+  203          
+  204          //-------------------------------------------------------------------------------------------------------
+             -------------
+  205          // 函数简介     对超时数值进行编码
+  206          // 参数说明     timeout_mclks   超时时长 -MCLKs 值
+  207          // 返回参数     uint16          返回编码值
+  208          // 使用示例     dl1a_encode_timeout(timeout_mclks);
+  209          // 备注信息     在 MCLK 中对超时的序列步骤超时寄存器值进行编码
+  210          //-------------------------------------------------------------------------------------------------------
+             -------------
+  211          static uint16 dl1a_encode_timeout (uint16 timeout_mclks)
+  212          {
+  213   1          uint32 edata ls_byte = 0;
+  214   1          uint16 edata ms_byte = 0;
+  215   1          uint16 edata return_data = 0;
+  216   1          
+  217   1          if (timeout_mclks > 0)
+  218   1          {
+  219   2              // 格式: (LSByte * 2 ^ MSByte) + 1
+  220   2              ls_byte = timeout_mclks - 1;
+  221   2              
+  222   2              while ((ls_byte & 0xFFFFFF00) > 0)
+  223   2              {
+  224   3                  ls_byte >>= 1;
+  225   3                  ms_byte++;
+  226   3              }
+  227   2              
+  228   2              return_data = (ms_byte << 8) | (ls_byte & 0xFF);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 5   
+
+  229   2          }
+  230   1          
+  231   1          return return_data;
+  232   1      }
+  233          
+  234          //-------------------------------------------------------------------------------------------------------
+             -------------
+  235          // 函数简介     获取序列步骤使能设置
+  236          // 参数说明     enables         序列使能步骤结构体
+  237          // 返回参数     void
+  238          // 使用示例     dl1a_get_sequence_step_enables(enables);
+  239          // 备注信息
+  240          //-------------------------------------------------------------------------------------------------------
+             -------------
+  241          static void dl1a_get_sequence_step_enables(dl1a_sequence_enables_step_struct *enables)
+  242          {
+  243   1          uint8 sequence_config = 0;
+  244   1          dl1a_read_registers(DL1A_SYSTEM_SEQUENCE_CONFIG, &sequence_config, 1);
+  245   1          
+  246   1          enables->tcc          = (sequence_config >> 4) & 0x1;
+  247   1          enables->dss          = (sequence_config >> 3) & 0x1;
+  248   1          enables->msrc         = (sequence_config >> 2) & 0x1;
+  249   1          enables->pre_range    = (sequence_config >> 6) & 0x1;
+  250   1          enables->final_range  = (sequence_config >> 7) & 0x1;
+  251   1      }
+  252          
+  253          //-------------------------------------------------------------------------------------------------------
+             -------------
+  254          // 函数简介     获取脉冲周期
+  255          // 参数说明     type            预量程类型
+  256          // 返回参数     uint8           返回的周期值
+  257          // 使用示例     dl1a_get_vcsel_pulse_period(DL1A_VCSEL_PERIOD_PER_RANGE);
+  258          // 备注信息     在 PCLKs 中获取给定周期类型的 VCSEL 脉冲周期
+  259          //-------------------------------------------------------------------------------------------------------
+             -------------
+  260          static uint8 dl1a_get_vcsel_pulse_period (dl1a_vcsel_period_type_enum type)
+  261          {
+  262   1          uint8 data_buffer = 0;
+  263   1          
+  264   1          if(DL1A_VCSEL_PERIOD_PER_RANGE == type)
+  265   1          {
+  266   2              dl1a_read_registers(DL1A_PRE_RANGE_CONFIG_VCSEL_PERIOD, &data_buffer, 1);
+  267   2              data_buffer = decode_vcsel_period(data_buffer);
+  268   2          }
+  269   1          else if(DL1A_VCSEL_PERIOD_FINAL_RANGE == type)
+  270   1          {
+  271   2              dl1a_read_registers(DL1A_FINAL_RANGE_CONFIG_VCSEL_PERIOD, &data_buffer, 1);
+  272   2              data_buffer = decode_vcsel_period(data_buffer);
+  273   2          }
+  274   1          else
+  275   1          {
+  276   2              data_buffer = 255;
+  277   2          }
+  278   1          
+  279   1          return data_buffer;
+  280   1      }
+  281          
+  282          //-------------------------------------------------------------------------------------------------------
+             -------------
+  283          // 函数简介     获取序列步骤超时设置
+  284          // 参数说明     enables         序列使能步骤结构体
+  285          // 参数说明     timeouts        序列超时步骤结构体
+  286          // 返回参数     void
+  287          // 使用示例     dl1a_get_sequence_step_timeouts(enables, timeouts);
+  288          // 备注信息     获取所有超时而不仅仅是请求的超时 并且还存储中间值
+  289          //-------------------------------------------------------------------------------------------------------
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 6   
+
+             -------------
+  290          static void dl1a_get_sequence_step_timeouts (dl1a_sequence_enables_step_struct const *enables, dl1a_seque
+             -nce_timeout_step_struct *timeouts)
+  291          {
+  292   1          uint8 reg_buffer[2];
+  293   1          uint16 reg16_buffer = 0;
+  294   1          
+  295   1          timeouts->pre_range_vcsel_period_pclks = dl1a_get_vcsel_pulse_period(DL1A_VCSEL_PERIOD_PER_RANGE);
+  296   1          
+  297   1          dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, reg_buffer, 1);
+  298   1          timeouts->msrc_dss_tcc_mclks = reg_buffer[0] + 1;
+  299   1          timeouts->msrc_dss_tcc_us = dl1a_timeout_mclks_to_microseconds(timeouts->msrc_dss_tcc_mclks, (uint8)t
+             -imeouts->pre_range_vcsel_period_pclks);
+  300   1          
+  301   1          dl1a_read_registers(DL1A_PRE_RANGE_CONFIG_TIMEOUT_MACROP_HI, reg_buffer, 2);
+  302   1          reg16_buffer = ((uint16) reg_buffer[0] << 8) | reg_buffer[1];
+  303   1          timeouts->pre_range_mclks = dl1a_decode_timeout(reg16_buffer);
+  304   1          timeouts->pre_range_us = dl1a_timeout_mclks_to_microseconds(timeouts->pre_range_mclks, (uint8)timeout
+             -s->pre_range_vcsel_period_pclks);
+  305   1          
+  306   1          timeouts->final_range_vcsel_period_pclks = dl1a_get_vcsel_pulse_period(DL1A_VCSEL_PERIOD_FINAL_RANGE)
+             -;
+  307   1          
+  308   1          dl1a_read_registers(DL1A_FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI, reg_buffer, 2);
+  309   1          reg16_buffer = ((uint16) reg_buffer[0] << 8) | reg_buffer[1];
+  310   1          timeouts->final_range_mclks = dl1a_decode_timeout(reg16_buffer);
+  311   1          
+  312   1          if(enables->pre_range)
+  313   1          {
+  314   2              timeouts->final_range_mclks -= timeouts->pre_range_mclks;
+  315   2          }
+  316   1          
+  317   1          timeouts->final_range_us = dl1a_timeout_mclks_to_microseconds(timeouts->final_range_mclks, (uint8)tim
+             -eouts->final_range_vcsel_period_pclks);
+  318   1      }
+  319          
+  320          //-------------------------------------------------------------------------------------------------------
+             -------------
+  321          // 函数简介     执行单次参考校准
+  322          // 参数说明     vhv_init_byte   预设校准值
+  323          // 返回参数     uint8           操作是否成功 0-成功 1-失败
+  324          // 使用示例     dl1a_get_vcsel_pulse_period(DL1A_VCSEL_PERIOD_PER_RANGE);
+  325          // 备注信息     在 PCLKs 中获取给定周期类型的 VCSEL 脉冲周期
+  326          //-------------------------------------------------------------------------------------------------------
+             -------------
+  327          static uint8 dl1a_perform_single_ref_calibration (uint8 vhv_init_byte)
+  328          {
+  329   1          uint8 return_state = 0;
+  330   1          uint8 data_buffer = 0;
+  331   1          volatile uint16 loop_count = 0;
+  332   1          
+  333   1          do
+  334   1          {
+  335   2              dl1a_write_register(DL1A_SYSRANGE_START, 0x01 | vhv_init_byte);
+  336   2              dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
+  337   2              
+  338   2              while(0 == (data_buffer & 0x07))
+  339   2              {
+  340   3                  system_delay_ms(1);
+  341   3                  dl1a_read_registers(DL1A_MSRC_CONFIG_TIMEOUT_MACROP, &data_buffer, 1);
+  342   3                  
+  343   3                  if(DL1A_TIMEOUT_COUNT < loop_count ++)
+  344   3                  {
+  345   4                      return_state = 1;
+  346   4                      break;
+  347   4                  }
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 7   
+
+  348   3              }
+  349   2              
+  350   2              if(return_state)
+  351   2              {
+  352   3                  break;
+  353   3              }
+  354   2              
+  355   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+  356   2              dl1a_write_register(DL1A_SYSRANGE_START, 0x00);
+  357   2          }
+  358   1          while(0);
+  359   1          
+  360   1          return return_state;
+  361   1      }
+  362          
+  363          //-------------------------------------------------------------------------------------------------------
+             -------------
+  364          // 函数简介     设置测量定时预算 (以微秒为单位)
+  365          // 参数说明     budget_us       设定的测量允许的时间
+  366          // 返回参数     uint8           操作结果 0-成功 1-失败
+  367          // 使用示例     dl1a_set_measurement_timing_budget(measurement_timing_budget_us);
+  368          // 备注信息     这是一次测量允许的时间
+  369          //              即在测距序列的子步骤之间分配时间预算
+  370          //              更长的时间预算允许更精确的测量
+  371          //              增加一个N倍的预算可以减少一个sqrt(N)倍的范围测量标准偏差
+  372          //              默认为33毫秒 最小值为20 ms
+  373          //-------------------------------------------------------------------------------------------------------
+             -------------
+  374          static uint8 dl1a_set_measurement_timing_budget (uint32 budget_us)
+  375          {
+  376   1          uint8 return_state = 0;
+  377   1          uint8 data_buffer[3];
+  378   1          uint16 dat = 0;
+  379   1          
+  380   1          uint32 final_range_timeout_us = 0;
+  381   1          uint16 final_range_timeout_mclks = 0;
+  382   1          
+  383   1          dl1a_sequence_enables_step_struct enables;
+  384   1          dl1a_sequence_timeout_step_struct timeouts;
+  385   1          
+  386   1          do
+  387   1          {
+  388   2              uint32 used_budget_us = DL1A_SET_START_OVERHEAD + DL1A_END_OVERHEAD;
+  389   2              
+  390   2              if(DL1A_MIN_TIMING_BUDGET > budget_us)
+  391   2              {
+  392   3                  return_state = 1;
+  393   3                  break;
+  394   3              }
+  395   2              
+  396   2              dl1a_get_sequence_step_enables(&enables);
+  397   2              dl1a_get_sequence_step_timeouts(&enables, &timeouts);
+  398   2              
+  399   2              if(enables.tcc)
+  400   2              {
+  401   3                  used_budget_us += (timeouts.msrc_dss_tcc_us + DL1A_TCC_OVERHEAD);
+  402   3              }
+  403   2              
+  404   2              if(enables.dss)
+  405   2              {
+  406   3                  used_budget_us += 2 * (timeouts.msrc_dss_tcc_us + DL1A_DSS_OVERHEAD);
+  407   3              }
+  408   2              else if(enables.msrc)
+  409   2              {
+  410   3                  used_budget_us += (timeouts.msrc_dss_tcc_us + DL1A_MSRC_OVERHEAD);
+  411   3              }
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 8   
+
+  412   2              
+  413   2              if(enables.pre_range)
+  414   2              {
+  415   3                  used_budget_us += (timeouts.pre_range_us + DL1A_PRERANGE_OVERHEAD);
+  416   3              }
+  417   2              
+  418   2              if(enables.final_range)
+  419   2              {
+  420   3                  // 请注意 最终范围超时由计时预算和序列中所有其他超时的总和决定
+  421   3                  // 如果没有空间用于最终范围超时 则将设置错误
+  422   3                  // 否则 剩余时间将应用于最终范围
+  423   3                  used_budget_us += DL1A_FINALlRANGE_OVERHEAD;
+  424   3                  
+  425   3                  if(used_budget_us > budget_us)
+  426   3                  {
+  427   4                      // 请求的超时太大
+  428   4                      return_state = 1;
+  429   4                      break;
+  430   4                  }
+  431   3                  
+  432   3                  // 对于最终超时范围 必须添加预量程范围超时
+  433   3                  // 为此 最终超时和预量程超时必须以宏周期 MClks 表示
+  434   3                  // 因为它们具有不同的 VCSEL 周期
+  435   3                  final_range_timeout_us = budget_us - used_budget_us;
+  436   3                  final_range_timeout_mclks =
+  437   3                      (uint16)dl1a_timeout_microseconds_to_mclks(final_range_timeout_us,
+  438   3                          (uint8)timeouts.final_range_vcsel_period_pclks);
+  439   3                          
+  440   3                  if(enables.pre_range)
+  441   3                  {
+  442   4                      final_range_timeout_mclks += timeouts.pre_range_mclks;
+  443   4                  }
+  444   3                  
+  445   3                  dat = dl1a_encode_timeout(final_range_timeout_mclks);
+  446   3                  data_buffer[0] = DL1A_FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI;
+  447   3                  data_buffer[1] = ((dat >> 8) & 0xFF);
+  448   3                  data_buffer[2] = (dat & 0xFF);
+  449   3                  dl1a_write_array(data_buffer, 3);
+  450   3              }
+  451   2          }
+  452   1          while(0);
+  453   1          
+  454   1          return return_state;
+  455   1      }
+  456          
+  457          //-------------------------------------------------------------------------------------------------------
+             -------------
+  458          // 函数简介     获取测量定时预算 (以微秒为单位)
+  459          // 参数说明     void
+  460          // 返回参数     uint32          已设定的测量允许的时间
+  461          // 使用示例     dl1a_get_measurement_timing_budget();
+  462          // 备注信息
+  463          //-------------------------------------------------------------------------------------------------------
+             -------------
+  464          static uint32 dl1a_get_measurement_timing_budget (void)
+  465          {
+  466   1          dl1a_sequence_enables_step_struct enables;
+  467   1          dl1a_sequence_timeout_step_struct timeouts;
+  468   1          
+  469   1          // 开始和结束开销时间始终存在
+  470   1          uint32 budget_us = DL1A_GET_START_OVERHEAD + DL1A_END_OVERHEAD;
+  471   1          
+  472   1          dl1a_get_sequence_step_enables(&enables);
+  473   1          dl1a_get_sequence_step_timeouts(&enables, &timeouts);
+  474   1          
+  475   1          if(enables.tcc)
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 9   
+
+  476   1          {
+  477   2              budget_us += (timeouts.msrc_dss_tcc_us + DL1A_TCC_OVERHEAD);
+  478   2          }
+  479   1          
+  480   1          if(enables.dss)
+  481   1          {
+  482   2              budget_us += 2 * (timeouts.msrc_dss_tcc_us + DL1A_DSS_OVERHEAD);
+  483   2          }
+  484   1          else if(enables.msrc)
+  485   1          {
+  486   2              budget_us += (timeouts.msrc_dss_tcc_us + DL1A_MSRC_OVERHEAD);
+  487   2          }
+  488   1          
+  489   1          if(enables.pre_range)
+  490   1          {
+  491   2              budget_us += (timeouts.pre_range_us + DL1A_PRERANGE_OVERHEAD);
+  492   2          }
+  493   1          
+  494   1          if(enables.final_range)
+  495   1          {
+  496   2              budget_us += (timeouts.final_range_us + DL1A_FINALlRANGE_OVERHEAD);
+  497   2          }
+  498   1          
+  499   1          return budget_us;
+  500   1      }
+  501          
+  502          //-------------------------------------------------------------------------------------------------------
+             -------------
+  503          // 函数简介     设置返回信号速率限制 该值单位为 MCPS (百万次每秒)
+  504          // 参数说明     limit_mcps      设置的最小速率
+  505          // 返回参数     void
+  506          // 使用示例     dl1a_set_signal_rate_limit(0.25);
+  507          // 备注信息     这个速率表示从目标反射并被设备检测到的信号的振幅
+  508          //              设置此限制可以确定传感器报告有效读数所需的最小测量值
+  509          //              设置一个较低的限制可以增加传感器的测量范围
+  510          //              但似乎也增加了 <由于来自目标以外的物体的不需要的反射导致> 得�
+             -��不准确读数的可能性
+  511          //              默认为 0.25 MCPS 可预设范围为 0 - 511.99
+  512          //-------------------------------------------------------------------------------------------------------
+             -------------
+  513          static void dl1a_set_signal_rate_limit (float limit_mcps)
+  514          {
+  515   1          uint8 data_buffer[3];
+  516   1          uint16 limit_mcps_16bit = (uint16)(limit_mcps * (1 << 7));
+  517   1          
+  518   1          //zf_assert(0 <= limit_mcps || 511.99 >= limit_mcps);
+  519   1          
+  520   1          data_buffer[0] = DL1A_FINAL_RANGE_CONFIG_MIN_COUNT_RATE_RTN_LIMIT;
+  521   1          data_buffer[1] = ((limit_mcps_16bit >> 8) & 0xFF);
+  522   1          data_buffer[2] = (limit_mcps_16bit & 0xFF);
+  523   1          
+  524   1          dl1a_write_array(data_buffer, 3);
+  525   1      }
+  526          
+  527          //-------------------------------------------------------------------------------------------------------
+             -------------
+  528          // 函数简介     返回以毫米为单位的范围读数
+  529          // 参数说明     void
+  530          // 返回参数     void
+  531          // 使用示例     dl1a_get_distance();
+  532          // 备注信息     在开始单次射程测量后也调用此函数
+  533          //-------------------------------------------------------------------------------------------------------
+             -------------
+  534          void dl1a_get_distance (void)
+  535          {
+  536   1          if(dl1a_init_flag)
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 10  
+
+  537   1          {
+  538   2              uint8 reg_databuffer[3];
+  539   2              
+  540   2              dl1a_read_registers(DL1A_RESULT_INTERRUPT_STATUS, reg_databuffer, 1);
+  541   2              
+  542   2              if(0 != (reg_databuffer[0] & 0x07))
+  543   2              {
+  544   3                  // 假设线性度校正增益为默认值 1000 且未启用分数范围
+  545   3                  dl1a_read_registers(DL1A_RESULT_RANGE_STATUS + 10, reg_databuffer, 2);
+  546   3                  dl1a_distance_mm = ((uint16)reg_databuffer[0] << 8);
+  547   3                  dl1a_distance_mm |= reg_databuffer[1];
+  548   3                  
+  549   3                  dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+  550   3                  dl1a_finsh_flag = 1;
+  551   3              }
+  552   2              
+  553   2              if(reg_databuffer[0] & 0x10)
+  554   2              {
+  555   3                  dl1a_read_registers(DL1A_RESULT_RANGE_STATUS + 10, reg_databuffer, 2);
+  556   3                  dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+  557   3              }
+  558   2          }
+  559   1      }
+  560          
+  561          //-------------------------------------------------------------------------------------------------------
+             -------------
+  562          // 函数简介     DL1A INT 中断响应处理函数
+  563          // 参数说明     void
+  564          // 返回参数     void
+  565          // 使用示例     dl1a_int_handler();
+  566          // 备注信息     本函数需要在 DL1A_INT_PIN 对应的外部中断处理函数中调用
+  567          //-------------------------------------------------------------------------------------------------------
+             -------------
+  568          void dl1a_int_handler (void)
+  569          {
+  570   1      #if DL1A_INT_ENABLE
+                   dl1a_get_distance();
+               #endif
+  573   1      }
+  574          // 函数简介     初始化 DL1A
+  575          // 参数说明     void
+  576          // 返回参数     uint8           1-初始化失败 0-初始化成功
+  577          // 使用示例     dl1a_init();
+  578          // 备注信息
+  579          //-------------------------------------------------------------------------------------------------------
+             -------------
+  580          uint8 dl1a_init (void)
+  581          {
+  582   1          uint32 measurement_timing_budget_us;
+  583   1          uint8 stop_variable = 0;
+  584   1          uint8 return_state = 0;
+  585   1          uint8 reg_data_buffer = 0;
+  586   1          uint8 ref_spad_map[6];
+  587   1          uint8 data_buffer[7];
+  588   1          uint16 i = 0;
+  589   1          
+  590   1          uint8 temp_buff1[][2] =   // BUFF1
+  591   1          {
+  592   1              {0x88, 0x00},
+  593   1              {0x80, 0x01},
+  594   1              {0xFF, 0x01},
+  595   1              {0x00, 0x00},
+  596   1          };
+  597   1          
+  598   1          uint8 temp_buff2[][2] =   // BUFF2
+  599   1          {
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 11  
+
+  600   1              {0x00, 0x01},
+  601   1              {0xFF, 0x00},
+  602   1              {0x80, 0x00},
+  603   1          };
+  604   1          
+  605   1          uint8 temp_buff3[][2] =   // BUFF3
+  606   1          {
+  607   1              {0xFF, 0x01},
+  608   1              {DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00},
+  609   1              {DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C },
+  610   1              {0xFF, 0x00},
+  611   1              {DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4},
+  612   1          };
+  613   1          
+  614   1          uint8 temp_buff4[][2] =   // BUFF4
+  615   1          {
+  616   1              {0xFF, 0x01},
+  617   1              {0x00, 0x00},
+  618   1              {0xFF, 0x00},
+  619   1              {0x09, 0x00},
+  620   1              {0x10, 0x00},
+  621   1              {0x11, 0x00},
+  622   1              {0x24, 0x01},
+  623   1              {0x25, 0xFF},
+  624   1              {0x75, 0x00},
+  625   1              {0xFF, 0x01},
+  626   1              {0x4E, 0x2C},
+  627   1              {0x48, 0x00},
+  628   1              {0x30, 0x20},
+  629   1              {0xFF, 0x00},
+  630   1              {0x30, 0x09},
+  631   1              {0x54, 0x00},
+  632   1              {0x31, 0x04},
+  633   1              {0x32, 0x03},
+  634   1              {0x40, 0x83},
+  635   1              {0x46, 0x25},
+  636   1              {0x60, 0x00},
+  637   1              {0x27, 0x00},
+  638   1              {0x50, 0x06},
+  639   1              {0x51, 0x00},
+  640   1              {0x52, 0x96},
+  641   1              {0x56, 0x08},
+  642   1              {0x57, 0x30},
+  643   1              {0x61, 0x00},
+  644   1              {0x62, 0x00},
+  645   1              {0x64, 0x00},
+  646   1              {0x65, 0x00},
+  647   1              {0x66, 0xA0},
+  648   1              {0xFF, 0x01},
+  649   1              {0x22, 0x32},
+  650   1              {0x47, 0x14},
+  651   1              {0x49, 0xFF},
+  652   1              {0x4A, 0x00},
+  653   1              {0xFF, 0x00},
+  654   1              {0x7A, 0x0A},
+  655   1              {0x7B, 0x00},
+  656   1              {0x78, 0x21},
+  657   1              {0xFF, 0x01},
+  658   1              {0x23, 0x34},
+  659   1              {0x42, 0x00},
+  660   1              {0x44, 0xFF},
+  661   1              {0x45, 0x26},
+  662   1              {0x46, 0x05},
+  663   1              {0x40, 0x40},
+  664   1              {0x0E, 0x06},
+  665   1              {0x20, 0x1A},
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 12  
+
+  666   1              {0x43, 0x40},
+  667   1              {0xFF, 0x00},
+  668   1              {0x34, 0x03},
+  669   1              {0x35, 0x44},
+  670   1              {0xFF, 0x01},
+  671   1              {0x31, 0x04},
+  672   1              {0x4B, 0x09},
+  673   1              {0x4C, 0x05},
+  674   1              {0x4D, 0x04},
+  675   1              {0xFF, 0x00},
+  676   1              {0x44, 0x00},
+  677   1              {0x45, 0x20},
+  678   1              {0x47, 0x08},
+  679   1              {0x48, 0x28},
+  680   1              {0x67, 0x00},
+  681   1              {0x70, 0x04},
+  682   1              {0x71, 0x01},
+  683   1              {0x72, 0xFE},
+  684   1              {0x76, 0x00},
+  685   1              {0x77, 0x00},
+  686   1              {0xFF, 0x01},
+  687   1              {0x0D, 0x01},
+  688   1              {0xFF, 0x00},
+  689   1              {0x80, 0x01},
+  690   1              {0x01, 0xF8},
+  691   1              {0xFF, 0x01},
+  692   1              {0x8E, 0x01},
+  693   1              {0x00, 0x01},
+  694   1              {0xFF, 0x00},
+  695   1              {0x80, 0x00}
+  696   1          };
+  697   1          
+  698   1          memset(ref_spad_map, 0, 6);
+  699   1          memset(data_buffer, 0, 7);
+  700   1          
+  701   1      #if DL1A_USE_SOFT_IIC
+  702   1          soft_iic_init(&dl1a_iic_struct, DL1A_DEV_ADDR, DL1A_SOFT_IIC_DELAY, DL1A_SCL_PIN, DL1A_SDA_PIN);
+  703   1      #else
+                   iic_init(DL1A_IIC, DL1A_DEV_ADDR, DL1A_IIC_SPEED, DL1A_SCL_PIN, DL1A_SDA_PIN);
+               #endif
+  706   1          
+  707   1      #if DL1A_XS_ENABLE
+  708   1          gpio_init(DL1A_XS_PIN, GPO, GPIO_HIGH, GPO_PUSH_PULL);
+  709   1      #endif
+  710   1          
+  711   1          do
+  712   1          {
+  713   2          
+  714   2      #if DL1A_XS_ENABLE
+  715   2              system_delay_ms(100);
+  716   2              gpio_low(DL1A_XS_PIN);
+  717   2              system_delay_ms(50);
+  718   2              gpio_high(DL1A_XS_PIN);
+  719   2              system_delay_ms(100);
+  720   2      #endif
+  721   2              
+  722   2              // -------------------------------- DL1A 启动初始化 --------------------------------
+  723   2              reg_data_buffer = dl1a_read_register(DL1A_IO_VOLTAGE_CONFIG);         // 传感器默认 IO 为 1
+             -.8V 模式
+  724   2              dl1a_write_register(DL1A_IO_VOLTAGE_CONFIG, reg_data_buffer | 0x01);  // 配置 IO 为 2.8V 模�
+             -�
+  725   2              
+  726   2              for(i = 0; i < (sizeof(temp_buff1) / 2); i++)
+  727   2              {
+  728   3                  dl1a_write_register(temp_buff1[i][0], temp_buff1[i][1]);
+  729   3              }
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 13  
+
+  730   2              
+  731   2              //        dl1a_write_register(0x88, 0x00);                                         // 设置为�
+             -�准 IIC 模式
+  732   2              //        dl1a_write_register(0x80, 0x01);
+  733   2              //        dl1a_write_register(0xFF, 0x01);
+  734   2              //        dl1a_write_register(0x00, 0x00);
+  735   2              
+  736   2              dl1a_read_registers(0x91, &stop_variable, 1);
+  737   2              
+  738   2              for(i = 0; i < (sizeof(temp_buff2) / 2); i++)
+  739   2              {
+  740   3                  dl1a_write_register(temp_buff2[i][0], temp_buff2[i][1]);
+  741   3              }
+  742   2              
+  743   2              //        dl1a_write_register(0x00, 0x01);
+  744   2              //        dl1a_write_register(0xFF, 0x00);
+  745   2              //        dl1a_write_register(0x80, 0x00);
+  746   2              
+  747   2              // 禁用 SIGNAL_RATE_MSRC(bit1) 和 SIGNAL_RATE_PRE_RANGE(bit4) 限制检查
+  748   2              reg_data_buffer = dl1a_read_register(DL1A_MSRC_CONFIG);
+  749   2              dl1a_write_register(DL1A_MSRC_CONFIG, reg_data_buffer | 0x12);
+  750   2              
+  751   2              dl1a_set_signal_rate_limit(DL1A_DEFAULT_RATE_LIMIT);                  // 设置信号速率限制
+  752   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xFF);
+  753   2              // -------------------------------- DL1A 启动初始化 --------------------------------
+  754   2              
+  755   2              // -------------------------------- DL1A 配置初始化 --------------------------------
+  756   2              if(dl1a_get_spad_info(&data_buffer[0], &data_buffer[1]))
+  757   2              {
+  758   3                  return_state = 1;
+  759   3                  printf( "DL1A self check error.\r\n");
+  760   3                  break;
+  761   3              }
+  762   2              
+  763   2              // 从 GLOBAL_CONFIG_SPAD_ENABLES_REF_[0-6] 获取 SPAD map (RefGoodSpadMap) 数据
+  764   2              dl1a_read_registers(DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0, ref_spad_map, 6);
+  765   2              
+  766   2              for(i = 0; i < (sizeof(temp_buff3) / 2); i++)
+  767   2              {
+  768   3                  dl1a_write_register(temp_buff3[i][0], temp_buff3[i][1]);
+  769   3              }
+  770   2              
+  771   2              //        dl1a_write_register(0xFF, 0x01);
+  772   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_REF_EN_START_OFFSET, 0x00);
+  773   2              //        dl1a_write_register(DL1A_DYNAMIC_SPAD_NUM_REQUESTED_REF_SPAD, 0x2C);
+  774   2              //        dl1a_write_register(0xFF, 0x00);
+  775   2              //        dl1a_write_register(DL1A_GLOBAL_CONFIG_REF_EN_START_SELECT, 0xB4);
+  776   2              
+  777   2              data_buffer[2] = data_buffer[1] ? 12 : 0; // 12 is the first aperture spad
+  778   2              
+  779   2              for(i = 0; 48 > i; i ++)
+  780   2              {
+  781   3                  if(i < data_buffer[2] || data_buffer[3] == data_buffer[0])
+  782   3                  {
+  783   4                      // 此位低于应启用的第一个位
+  784   4                      // 或者 (eference_spad_count) 位已启用
+  785   4                      // 因此此位为零
+  786   4                      ref_spad_map[i / 8] &= ~(1 << (i % 8));
+  787   4                  }
+  788   3                  else if((ref_spad_map[i / 8] >> (i % 8)) & 0x1)
+  789   3                  {
+  790   4                      data_buffer[3] ++;
+  791   4                  }
+  792   3              }
+  793   2              
+  794   2              data_buffer[0] = DL1A_GLOBAL_CONFIG_SPAD_ENABLES_REF_0;
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 14  
+
+  795   2              
+  796   2              for(i = 1; 7 > i; i ++)
+  797   2              {
+  798   3                  data_buffer[1] = ref_spad_map[i - 1];
+  799   3              }
+  800   2              
+  801   2              dl1a_write_array(data_buffer, 7);
+  802   2              
+  803   2              for(i = 0; i < (sizeof(temp_buff4) / 2); i++)
+  804   2              {
+  805   3                  dl1a_write_register(temp_buff4[i][0], temp_buff4[i][1]);
+  806   3              }
+  807   2              
+  808   2              //        // 默认转换设置 version 02/11/2015_v36
+  809   2              //        dl1a_write_register(0xFF, 0x01);
+  810   2              //        dl1a_write_register(0x00, 0x00);
+  811   2              //        dl1a_write_register(0xFF, 0x00);
+  812   2              //        dl1a_write_register(0x09, 0x00);
+  813   2              //        dl1a_write_register(0x10, 0x00);
+  814   2              //        dl1a_write_register(0x11, 0x00);
+  815   2              //        dl1a_write_register(0x24, 0x01);
+  816   2              //        dl1a_write_register(0x25, 0xFF);
+  817   2              //        dl1a_write_register(0x75, 0x00);
+  818   2              //        dl1a_write_register(0xFF, 0x01);
+  819   2              //        dl1a_write_register(0x4E, 0x2C);
+  820   2              //        dl1a_write_register(0x48, 0x00);
+  821   2              //        dl1a_write_register(0x30, 0x20);
+  822   2              //        dl1a_write_register(0xFF, 0x00);
+  823   2              //        dl1a_write_register(0x30, 0x09);
+  824   2              //        dl1a_write_register(0x54, 0x00);
+  825   2              //        dl1a_write_register(0x31, 0x04);
+  826   2              //        dl1a_write_register(0x32, 0x03);
+  827   2              //        dl1a_write_register(0x40, 0x83);
+  828   2              //        dl1a_write_register(0x46, 0x25);
+  829   2              //        dl1a_write_register(0x60, 0x00);
+  830   2              //        dl1a_write_register(0x27, 0x00);
+  831   2              //        dl1a_write_register(0x50, 0x06);
+  832   2              //        dl1a_write_register(0x51, 0x00);
+  833   2              //        dl1a_write_register(0x52, 0x96);
+  834   2              //        dl1a_write_register(0x56, 0x08);
+  835   2              //        dl1a_write_register(0x57, 0x30);
+  836   2              //        dl1a_write_register(0x61, 0x00);
+  837   2              //        dl1a_write_register(0x62, 0x00);
+  838   2              //        dl1a_write_register(0x64, 0x00);
+  839   2              //        dl1a_write_register(0x65, 0x00);
+  840   2              //        dl1a_write_register(0x66, 0xA0);
+  841   2              //        dl1a_write_register(0xFF, 0x01);
+  842   2              //        dl1a_write_register(0x22, 0x32);
+  843   2              //        dl1a_write_register(0x47, 0x14);
+  844   2              //        dl1a_write_register(0x49, 0xFF);
+  845   2              //        dl1a_write_register(0x4A, 0x00);
+  846   2              //        dl1a_write_register(0xFF, 0x00);
+  847   2              //        dl1a_write_register(0x7A, 0x0A);
+  848   2              //        dl1a_write_register(0x7B, 0x00);
+  849   2              //        dl1a_write_register(0x78, 0x21);
+  850   2              //        dl1a_write_register(0xFF, 0x01);
+  851   2              //        dl1a_write_register(0x23, 0x34);
+  852   2              //        dl1a_write_register(0x42, 0x00);
+  853   2              //        dl1a_write_register(0x44, 0xFF);
+  854   2              //        dl1a_write_register(0x45, 0x26);
+  855   2              //        dl1a_write_register(0x46, 0x05);
+  856   2              //        dl1a_write_register(0x40, 0x40);
+  857   2              //        dl1a_write_register(0x0E, 0x06);
+  858   2              //        dl1a_write_register(0x20, 0x1A);
+  859   2              //        dl1a_write_register(0x43, 0x40);
+  860   2              //        dl1a_write_register(0xFF, 0x00);
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 15  
+
+  861   2              //        dl1a_write_register(0x34, 0x03);
+  862   2              //        dl1a_write_register(0x35, 0x44);
+  863   2              //        dl1a_write_register(0xFF, 0x01);
+  864   2              //        dl1a_write_register(0x31, 0x04);
+  865   2              //        dl1a_write_register(0x4B, 0x09);
+  866   2              //        dl1a_write_register(0x4C, 0x05);
+  867   2              //        dl1a_write_register(0x4D, 0x04);
+  868   2              //        dl1a_write_register(0xFF, 0x00);
+  869   2              //        dl1a_write_register(0x44, 0x00);
+  870   2              //        dl1a_write_register(0x45, 0x20);
+  871   2              //        dl1a_write_register(0x47, 0x08);
+  872   2              //        dl1a_write_register(0x48, 0x28);
+  873   2              //        dl1a_write_register(0x67, 0x00);
+  874   2              //        dl1a_write_register(0x70, 0x04);
+  875   2              //        dl1a_write_register(0x71, 0x01);
+  876   2              //        dl1a_write_register(0x72, 0xFE);
+  877   2              //        dl1a_write_register(0x76, 0x00);
+  878   2              //        dl1a_write_register(0x77, 0x00);
+  879   2              //        dl1a_write_register(0xFF, 0x01);
+  880   2              //        dl1a_write_register(0x0D, 0x01);
+  881   2              //        dl1a_write_register(0xFF, 0x00);
+  882   2              //        dl1a_write_register(0x80, 0x01);
+  883   2              //        dl1a_write_register(0x01, 0xF8);
+  884   2              //        dl1a_write_register(0xFF, 0x01);
+  885   2              //        dl1a_write_register(0x8E, 0x01);
+  886   2              //        dl1a_write_register(0x00, 0x01);
+  887   2              //        dl1a_write_register(0xFF, 0x00);
+  888   2              //        dl1a_write_register(0x80, 0x00);
+  889   2              
+  890   2              // 将中断配置设置为新样品就绪
+  891   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_GPIO_CONFIG, 0x04);
+  892   2              reg_data_buffer = dl1a_read_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH);
+  893   2              dl1a_write_register(DL1A_GPIO_HV_MUX_ACTIVE_HIGH, reg_data_buffer & ~0x10);
+  894   2              dl1a_write_register(DL1A_SYSTEM_INTERRUPT_CLEAR, 0x01);
+  895   2              
+  896   2              measurement_timing_budget_us  = dl1a_get_measurement_timing_budget();
+  897   2              
+  898   2              // 默认情况下禁用 MSRC 和 TCC
+  899   2              // MSRC = Minimum Signal Rate Check
+  900   2              // TCC = Target CentreCheck
+  901   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);
+  902   2              dl1a_set_measurement_timing_budget(measurement_timing_budget_us);    // 重新计算时序预算
+  903   2              // -------------------------------- DL1A 配置初始化 --------------------------------
+  904   2              
+  905   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x01);
+  906   2              
+  907   2              if(dl1a_perform_single_ref_calibration(0x40))
+  908   2              {
+  909   3                  return_state = 1;
+  910   3                  printf( "DL1A perform single reference calibration error.\r\n");
+  911   3                  break;
+  912   3              }
+  913   2              
+  914   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0x02);
+  915   2              
+  916   2              if(dl1a_perform_single_ref_calibration(0x00))
+  917   2              {
+  918   3                  return_state = 1;
+  919   3                  printf( "DL1A perform single reference calibration error.\r\n");
+  920   3                  break;
+  921   3              }
+  922   2              
+  923   2              dl1a_write_register(DL1A_SYSTEM_SEQUENCE_CONFIG, 0xE8);           // 恢复以前的序列配置
+  924   2              
+  925   2              system_delay_ms(100);
+  926   2              
+C251 COMPILER V5.60.0,  zf_device_dl1a                                                     07/05/25  16:28:03  PAGE 16  
+
+  927   2              dl1a_write_register(0x80, 0x01);
+  928   2              dl1a_write_register(0xFF, 0x01);
+  929   2              dl1a_write_register(0x00, 0x00);
+  930   2              dl1a_write_register(0x91, stop_variable);
+  931   2              dl1a_write_register(0x00, 0x01);
+  932   2              dl1a_write_register(0xFF, 0x00);
+  933   2              dl1a_write_register(0x80, 0x00);
+  934   2              
+  935   2              dl1a_write_register(DL1A_SYSRANGE_START, 0x02);
+  936   2              dl1a_init_flag = 1;
+  937   2              
+  938   2      #if DL1A_INT_ENABLE
+                       exti_init(DL1A_INT_PIN, EXTI_TRIGGER_FALLING);
+                       dl1a_int_handler();
+                       dl1a_finsh_flag = 0;
+               #endif
+  943   2              set_tof_type(TOF_DL1A, dl1a_int_handler);
+  944   2          }
+  945   1          while(0);
+  946   1          
+  947   1          return return_state;
+  948   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      4772     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       366     ------
+  xdata-const size     =    ------     ------
+  edata size           =         8     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       279     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

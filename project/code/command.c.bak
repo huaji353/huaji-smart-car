@@ -1,0 +1,256 @@
+#include "zf_common_headfile.h"
+uint16 adc1,adc2,adc3,adc4;
+float vcc;
+int16 L_encoder = 0;
+int16 R_encoder = 0;
+int16 encoder_data_dir_1 = 0;
+int16 encoder_data_dir_2 = 0;
+char txt[32];
+uint8 eeprom_PID[]={
+//角度环    P高位   P低位  I高位  I低位  D高位  D低位
+            0x00,  0x00,  0x00,  0x00, 0x00, 0x00, 
+//角速度环   P高位  P低位  I高位  I低位  D高位  D低位
+            0x00,  0x00,  0x00,  0x00, 0x00, 0x00,
+//电机环     P高位  P低位  I高位  I低位  D高位  D低位  启动计数
+            0x00,  0x00,  0x00, 0x00, 0x00,  0x00  ,0x00
+};//eeprom_PID[0]~[5]为角度环P,I,D参数
+//eeprom_PID[6X1]~[6X1+5]为角速度环P,I,D参数
+//eeprom_PID[6X2]~[6X2+5]为电机环P,I,D参数
+//time采集
+uint32 time_start;
+uint32 time_end;
+uint32 time_delta;
+// 逐飞助手示波器函数定义区
+void seekfree_assistant_oscilloscope_init(void)
+{
+    // 逐飞助手初始化
+	seekfree_assistant_init();
+	// 设置无线串口输出
+	seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_BLE6A20);
+    seekfree_assistant_oscilloscope_data.channel_num = 4;
+    seekfree_assistant_oscilloscope_data.dat[0] = 0;
+    seekfree_assistant_oscilloscope_data.dat[1] = 0;
+    seekfree_assistant_oscilloscope_data.dat[2] = 0;
+    seekfree_assistant_oscilloscope_data.dat[3] = 0;
+}
+void seekfree_assistant_oscilloscope_code(uint16 x,uint16 y,uint16 z,uint16 w)
+{
+    seekfree_assistant_oscilloscope_data.dat[0] = x;
+    seekfree_assistant_oscilloscope_data.dat[1] = y;
+    seekfree_assistant_oscilloscope_data.dat[2] = z;
+    seekfree_assistant_oscilloscope_data.dat[3] = w;
+    seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+}
+//编码器函数定义区
+//-------------------------------------------------------------------------------------------------------------------
+// 函数简介     PIT 的周期中断处理函数 这个函数将在 PIT 对应的定时器中断调用 详见 isr.c
+// 参数说明     void
+// 返回参数     void
+// 使用示例     pit_handler();
+//-------------------------------------------------------------------------------------------------------------------
+void pit_handler (void)
+{
+    encoder_data_dir_1 = abs(encoder_get_count(ENCODER_DIR_1));                  // 获取编码器计数
+    encoder_data_dir_2 = abs(encoder_get_count(ENCODER_DIR_2));              	// 获取编码器计数
+
+    encoder_clear_count(ENCODER_DIR_1);                                		// 清空编码器计数
+    encoder_clear_count(ENCODER_DIR_2);                             		// 清空编码器计数
+}
+void encoder_init(void)
+{
+    encoder_dir_init(ENCODER_DIR_1, ENCODER_DIR_DIR_1, ENCODER_DIR_PULSE_1);   	// 初始化编码器模块与引脚 带方向增量编码器模式
+    encoder_dir_init(ENCODER_DIR_2, ENCODER_DIR_DIR_2, ENCODER_DIR_PULSE_2);    // 初始化编码器模块与引脚 带方向增量编码器模式
+                // 设置定时器1中断回调函数
+	tim1_irq_handler = pit_handler;
+	
+    pit_ms_init(PIT_CH, 100);                                                   // 初始化 PIT 为周期中断 100ms 周期
+}
+void encoder_text(void)
+{
+    sprintf(txt, "encoder1: %5d", encoder_data_dir_1);
+    ips200_show_string(0,0,txt);
+    sprintf(txt, "encoder2: %5d", encoder_data_dir_2);
+    ips200_show_string(0,16,txt);
+}
+
+//蜂鸣器函数定义区
+void buzzer_time(uint16 time)
+{
+    gpio_set_level(IO_P07, 1);
+    system_delay_ms(time);
+    gpio_set_level(IO_P07, 0);
+    system_delay_ms(time);
+}
+//ADC函数定义区
+void adc_main_init(void)
+{
+    adc_init(ADC_CHANNEL1, ADC_12BIT);                                          // 初始化对应 ADC 通道为对应精度
+    adc_init(ADC_CHANNEL2, ADC_12BIT);                                          // 初始化对应 ADC 通道为对应精度
+    adc_init(ADC_CHANNEL3, ADC_12BIT);                                          // 初始化对应 ADC 通道为对应精度
+    adc_init(ADC_CHANNEL4, ADC_12BIT);                                           // 初始化对应 ADC 通道为对应精度
+    adc_init(ADC_CHANNEL5, ADC_12BIT);                                           // 初始化对应 ADC 通道为对应精度
+}
+void adc_main_read(void)
+{
+    adc1= adc_convert(ADC_CHANNEL1);
+    adc2= adc_convert(ADC_CHANNEL2);
+    adc3= adc_convert(ADC_CHANNEL3);
+    adc4= adc_convert(ADC_CHANNEL4);
+    vcc= adc_convert(ADC_CHANNEL5);  
+    // seekfree_assistant_oscilloscope_code(adc1,adc2,adc3,adc4);
+}
+void adc_text(void)
+{
+    sprintf(txt, "adc1: %4d", adc1);
+    ips200_show_string(0,0,txt);
+    sprintf(txt, "adc2: %4d", adc2);
+    ips200_show_string(0,16,txt);
+    sprintf(txt, "adc3: %4d", adc3);
+    ips200_show_string(0,32,txt);
+    sprintf(txt, "adc4: %4d", adc4);
+    ips200_show_string(0,48,txt);
+    sprintf(txt, "vcc: %4d", vcc);
+    ips200_show_string(0,64,txt); 
+}
+//IPS200函数定义区
+void ips_text(void)
+{
+	ips200_show_string(0,0,"aooooo");
+}
+//适用于普通串口用来输出信息
+void uart_printf(uart_index_enum uart_n,const char* format,...)
+{
+  char buffer[256];
+  va_list args;
+  va_start(args,format);
+  vsprintf(buffer,format,args);
+  uart_write_string (uart_n, buffer);
+  va_end(args);
+}
+void uart_printf_test(void)
+{
+    uint8 data_len = 0;
+    uart_printf(UART_4, "test, %d\n", 123);
+    data_len = ble6a20_read_buffer(txt, 16);
+    if(data_len > 0)
+    {   
+        uart_printf(UART_4, "data_len: %d\n", data_len);
+        uart_printf(UART_4, "recv txt: %s\n", txt);
+    }
+    system_delay_ms(100);
+}
+// 实时显示VCC功能
+void display_vcc(void) {
+    // 格式化电压字符串
+    vcc= adc_convert(ADC_CHANNEL5)/6.994;
+#if VCC_ALARM_FLAG
+    if(vcc<11.1){
+        buzzer_time(100);
+    }
+#endif  
+    sprintf(txt, "VCC: %.2fV", vcc) ;
+    // 在屏幕右上角显示VCC值
+    ips200_show_string(150, 10, txt);
+}
+//EEPROM写入函数定义区
+void eeprom_write(void)
+{
+    uint8 i;
+    float temp_value;
+    uint8 int_part, dec_part;
+    
+    // 循环存储所有9个PID参数（3组，每组3个参数）
+    for(i = 0; i < 9; i++) {
+        // 根据索引选择对应的PID参数
+        if(i == 0) temp_value = PID_angle_P;
+        else if(i == 1) temp_value = PID_angle_I;
+        else if(i == 2) temp_value = PID_angle_D;
+        else if(i == 3) temp_value = PID_angle_speed_P;
+        else if(i == 4) temp_value = PID_angle_speed_I;
+        else if(i == 5) temp_value = PID_angle_speed_D;
+        else if(i == 6) temp_value = PID_MOTOR_P;
+        else if(i == 7) temp_value = PID_MOTOR_I;
+        else if(i == 8) temp_value = PID_MOTOR_D;
+        
+        // 计算整数部分和小数部分
+        int_part = (uint8)temp_value;
+        dec_part = (uint8)((temp_value - int_part) * 100);
+        
+        // 存储到EEPROM数组
+        eeprom_PID[i*2] = int_part;
+        eeprom_PID[i*2+1] = dec_part;
+    }
+    eeprom_PID[18] = 0x00;
+    // 擦除EEPROM页
+    iap_erase_page(0);
+    // 写入所有PID参数
+    iap_write_buff(0, eeprom_PID, sizeof(eeprom_PID));
+}
+void eeprom_erase(void)
+{
+    uint8 i;
+    iap_erase_page(0);
+    for(i = 0; i < 9; i++) {
+        eeprom_PID[i*2] = 0x00;
+        eeprom_PID[i*2+1] = 0x00;
+    }
+    eeprom_PID[18] = 0x00;
+    iap_write_buff(0, eeprom_PID, sizeof(eeprom_PID));
+}
+void eeprom_init_code(void)
+{
+    uint8 i;
+    float temp_value;
+    
+    iap_init();
+    iap_read_buff(0x00, eeprom_PID, sizeof(eeprom_PID));//读取eeprom_PID
+    if(eeprom_PID[18] != 0x00)
+    {
+        eeprom_write();
+        iap_read_buff(0x00, eeprom_PID, sizeof(eeprom_PID));//读取eeprom_PID
+    }
+    // 循环将EEPROM中的数据转换回PID参数
+    for(i = 0; i < 9; i++) {
+        // 计算浮点值：整数部分 + 小数部分/100
+        temp_value = (float)eeprom_PID[i*2] + (float)eeprom_PID[i*2+1]/100.0;
+        
+        // 根据索引将值赋给对应的PID参数
+        if(i == 0) PID_angle_P = temp_value;
+        else if(i == 1) PID_angle_I = temp_value;
+        else if(i == 2) PID_angle_D = temp_value;
+        else if(i == 3) PID_angle_speed_P = temp_value;
+        else if(i == 4) PID_angle_speed_I = temp_value;
+        else if(i == 5) PID_angle_speed_D = temp_value;
+        else if(i == 6) PID_MOTOR_P = temp_value;
+        else if(i == 7) PID_MOTOR_I = temp_value;
+        else if(i == 8) PID_MOTOR_D = temp_value;
+    }
+}
+//初始化函数定义区
+void to_init(void)
+{
+    ips200_init();
+    key_into();                             // 初始化按键
+    encoder_init();
+    menu_init();                           // 初始化菜单系统
+    menu_display();                        // 首次显示菜单   
+    gpio_init(IO_P07, GPO, 0, GPO_PUSH_PULL);//初始化蜂鸣器
+
+    adc_main_init();//初始化ADC
+    while(ble6a20_init())
+    {
+        system_delay_ms(100);
+        printf("wifi init error\n");
+    }
+    printf("wifi init success\n");
+    imu963ra_init();
+    printf("IMU963RA init success\n");
+    quaternion_init(); // 初始化四元数
+    printf("Quaternion init success\n");
+    gyro_calibrate(200);
+    //初始化逐飞助手
+    seekfree_assistant_oscilloscope_init();
+
+    //初始化eeprom
+    eeprom_init_code();
+}

@@ -1,0 +1,116 @@
+C251 COMPILER V5.60.0,  zf_driver_timer                                                    11/06/25  16:16:31  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_timer
+OBJECT MODULE PLACED IN .\out_file\zf_driver_timer.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_timer.c LARGE NOALIAS WARNINGLEVEL
+                    -(3) OPTIMIZE(1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\
+                    -..\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_driver_timer.lst) TABS(2) OBJECT(.\out_file\zf_driver_
+                    -timer.obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修改它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_driver_gpio.h"
+   37          #include "zf_driver_timer.h"
+   38          
+   39          
+   40          // 该数组禁止修改，内部使用,用户无需关心
+   41          static timer_function_enum timer_function_state[6] =
+   42          {
+   43              TIMER_FUNCTION_INIT,
+   44              TIMER_FUNCTION_INIT,
+   45              TIMER_FUNCTION_INIT,      
+   46              TIMER_FUNCTION_INIT,
+   47              TIMER_FUNCTION_INIT,
+   48            TIMER_FUNCTION_INIT,
+   49          };
+   50          
+   51          //-------------------------------------------------------------------------------------------------------
+             -------------
+   52          // 函数简介      TIMER 外设确认功能状态 库内部调用
+   53          // 参数说明     index           TIMER 外设模块号
+C251 COMPILER V5.60.0,  zf_driver_timer                                                    11/06/25  16:16:31  PAGE 2   
+
+   54          // 参数说明     mode            需要确的功能模块
+   55          // 返回参数     uint8           1-可以使用 0-不可以使用
+   56          // 使用示例     //zf_assert(timer_funciton_check(TIM_1, TIMER_FUNCTION_PWM);
+   57          //-------------------------------------------------------------------------------------------------------
+             -------------
+   58          uint8 timer_funciton_check (timer_index_enum index, timer_function_enum mode)
+   59          {
+   60   1          uint8 return_state = 1;
+   61   1          if(TIMER_FUNCTION_INIT == timer_function_state[index])
+   62   1          {
+   63   2              timer_function_state[index] = mode;
+   64   2          }
+   65   1          else if(timer_function_state[index] == mode)
+   66   1          {
+   67   2              return_state = 1;
+   68   2          }
+   69   1          else
+   70   1          {
+   71   2              return_state = 0;
+   72   2          }
+   73   1          return return_state;
+   74   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       121     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        17     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        17     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

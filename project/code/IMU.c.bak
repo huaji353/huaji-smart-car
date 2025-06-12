@@ -1,0 +1,274 @@
+#include "zf_common_headfile.h"
+#include "IMU.h"
+
+/* 全局变量定义 */
+imu_data_t imu_data;                           /* IMU数据 */
+Quaternion q = {1.0f, 0.0f, 0.0f, 0.0f};       /* 四元数，初始化为单位四元数 */
+EulerAngle euler = {0.0f, 0.0f, 0.0f};         /* 欧拉角 */
+
+// 自定义atan2函数
+float custom_atan2(float y, float x)
+{
+    if (x > 0)
+        return atan(y / x);
+    else if (x < 0 && y >= 0)
+        return atan(y / x) + PI;
+    else if (x < 0 && y < 0)
+        return atan(y / x) - PI;
+    else if (x == 0 && y > 0)
+        return PI / 2;
+    else if (x == 0 && y < 0)
+        return -PI / 2;
+    return 0;
+}
+
+/* IMU传感器数据显示函数 */
+void imu963ra_text(void)
+{   
+    /* 获取IMU963RA数据 */
+    imu963ra_get_acc();
+    imu963ra_get_gyro();
+    
+    /* 在IPS显示器上显示加速度数据 */
+    ips200_show_string(0, 16, "acc_x: ");
+    ips200_show_int16(60, 16, imu963ra_acc_x);
+    
+    ips200_show_string(0, 32, "acc_y: ");
+    ips200_show_int16(60, 32, imu963ra_acc_y);
+    
+    ips200_show_string(0, 48, "acc_z: ");
+    ips200_show_int16(60, 48, imu963ra_acc_z);
+    
+    /* 在IPS显示器上显示陀螺仪数据 */
+    ips200_show_string(0, 70, "IMU963RA Gyroscope:");
+    ips200_show_string(0, 86, "gyro_x: ");
+    ips200_show_int16(60, 86, imu963ra_gyro_x);
+    
+    ips200_show_string(0, 102, "gyro_y: ");
+    ips200_show_int16(60, 102, imu963ra_gyro_y);
+    
+    ips200_show_string(0, 118, "gyro_z: ");
+    ips200_show_int16(60, 118, imu963ra_gyro_z);
+    
+    /* 短暂延时，使显示更稳定 */
+    system_delay_ms(100);
+}
+
+/* 四元数初始化 */
+void quaternion_init(void) 
+{
+    /* 初始化为单位四元数 */
+    q.w = 1.0f;
+    q.x = 0.0f;
+    q.y = 0.0f;
+    q.z = 0.0f;
+    
+    /* 初始化陀螺仪偏置 */
+    imu_data.gyro_x = 0.0f;
+    imu_data.gyro_y = 0.0f;
+    imu_data.gyro_z = 0.0f;
+}
+
+/* 角速度数据低通滤波（小值置零） */
+float IMU_lvbo(float cy)
+{
+    if (cy < 0.05f && cy > -0.05f)
+    {
+        cy = 0.0f;
+    }
+    return cy;
+}
+
+/* 陀螺仪校准函数 */
+void gyro_calibrate(uint16 samples) 
+{
+    uint16 i;
+    char progress[32];
+    
+    /* 清除校准前的数据 */
+    imu_data.gyro_x = 0.0f;
+    imu_data.gyro_y = 0.0f;
+    imu_data.gyro_z = 0.0f;
+    
+    /* 清除屏幕，提示校准开始 */
+    ips200_clear(RGB565_WHITE);
+    ips200_show_string(0, 0, "imu gyro calibrate...");
+    ips200_show_string(0, 20, "please keep still");
+    
+    /* 收集多个样本求平均值 */
+    for(i = 0; i < samples; i++) 
+    {
+        imu963ra_get_gyro();
+        
+        imu_data.gyro_x += (float)imu963ra_gyro_x;
+        imu_data.gyro_y += (float)imu963ra_gyro_y;
+        imu_data.gyro_z += (float)imu963ra_gyro_z;
+        
+        /* 更新进度 */
+        if(i % 10 == 0) 
+        {
+            sprintf(progress, "progress: %d%%", (int)(i * 100 / samples));
+            ips200_show_string(0, 40, progress);
+        }
+        
+        system_delay_ms(10);
+    }
+    
+    /* 计算偏置 */
+    imu_data.gyro_x = imu_data.gyro_x / (float)samples;
+    imu_data.gyro_y = imu_data.gyro_y / (float)samples;
+    imu_data.gyro_z = imu_data.gyro_z / (float)samples;
+    
+    /* 显示校准结果 */
+    sprintf(txt, "bias_x: %.2f", imu_data.gyro_x);
+    ips200_show_string(0, 60, txt);
+    sprintf(txt, "bias_y: %.2f", imu_data.gyro_y);
+    ips200_show_string(0, 80, txt);
+    sprintf(txt, "bias_z: %.2f", imu_data.gyro_z);
+    ips200_show_string(0, 100, txt);
+    
+    ips200_show_string(0, 120, "calibrate done!");
+    system_delay_ms(500);
+}
+
+/* 四元数归一化 */
+void quat_normalize(Quaternion* q)
+{
+    float norm = sqrt(q->w*q->w + q->x*q->x + q->y*q->y + q->z*q->z);
+    
+    /* 防止除以零 */
+    if(norm < 0.0001f)
+    {
+        q->w = 1.0f;
+        q->x = 0.0f;
+        q->y = 0.0f;
+        q->z = 0.0f;
+        return;
+    }
+    
+    q->w /= norm;
+    q->x /= norm;
+    q->y /= norm;
+    q->z /= norm;
+}
+
+
+/* 仅使用角速度计更新四元数 */
+void quaternion_update(void) 
+{
+    float gx, gy, gz;
+    float qDot1, qDot2, qDot3, qDot4;
+    float dt = 1.0f / SAMPLE_FREQ; /* 计算时间间隔 */
+    
+    /* 读取IMU传感器数据 */
+    imu963ra_get_gyro();
+    
+    /* 处理陀螺仪数据，减去偏置并转换为弧度/秒 */
+    gx = imu963ra_gyro_transition((float)imu963ra_gyro_x - imu_data.gyro_x);
+    gy = imu963ra_gyro_transition((float)imu963ra_gyro_y - imu_data.gyro_y);
+    gz = imu963ra_gyro_transition((float)imu963ra_gyro_z - imu_data.gyro_z);
+    
+    /* 应用低通滤波 */
+    gx = IMU_lvbo(gx);
+    gy = IMU_lvbo(gy);
+    gz = IMU_lvbo(gz);
+    
+    /* 基于四元数微分方程进行积分更新 */
+    /* q_dot = 0.5 * q ⊗ ω，其中ω为角速度四元数[0,gx,gy,gz] */
+    qDot1 = 0.5f * (-q.x * gx - q.y * gy - q.z * gz);
+    qDot2 = 0.5f * (q.w * gx + q.y * gz - q.z * gy);
+    qDot3 = 0.5f * (q.w * gy - q.x * gz + q.z * gx);
+    qDot4 = 0.5f * (q.w * gz + q.x * gy - q.y * gx);
+    
+    /* 使用欧拉积分法更新四元数 */
+    q.w += qDot1 * dt;
+    q.x += qDot2 * dt;
+    q.y += qDot3 * dt;
+    q.z += qDot4 * dt;
+    
+    /* 四元数归一化 */
+    quat_normalize(&q);
+    
+    /* 计算欧拉角 */
+    euler = quaternion_to_euler(q);
+}
+
+/* 获取四元数 */
+Quaternion get_quaternion(void) 
+{
+    return q;
+}
+
+/* 四元数转欧拉角 (ZYX顺序) */
+EulerAngle quaternion_to_euler(Quaternion q) 
+{
+    EulerAngle euler;
+    float sinp, sinr_cosp, cosr_cosp, siny_cosp, cosy_cosp;
+    
+    /* 俯仰角 (Pitch) */
+    sinp = 2.0f * (q.w * q.y - q.z * q.x);
+    if (fabs(sinp) >= 1.0f)
+        euler.pitch = (sinp >= 0) ? (PI / 2.0f) : -(PI / 2.0f); /* 奇点情况处理 */
+    else
+        euler.pitch = asinf(sinp);
+    
+    /* 横滚角 (Roll) */
+    sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
+    cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+    euler.roll = atan2f(sinr_cosp, cosr_cosp);
+    
+    /* 偏航角 (Yaw) */
+    siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+    cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+    euler.yaw = atan2f(siny_cosp, cosy_cosp);
+    
+    /* 转换为角度 */
+    euler.roll = euler.roll * 180.0f / PI;
+    euler.pitch = euler.pitch * 180.0f / PI;
+    euler.yaw = euler.yaw * 180.0f / PI;
+    
+    return euler;
+}
+
+/* 显示四元数和欧拉角 */
+void quaternion_display(void) 
+{
+    /* 显示四元数 */
+    sprintf(txt, "Q.w: %.4f", q.w);
+    ips200_show_string(0, 0, txt);
+    sprintf(txt, "Q.x: %.4f", q.x);
+    ips200_show_string(0, 16, txt);
+    sprintf(txt, "Q.y: %.4f", q.y);
+    ips200_show_string(0, 32, txt);
+    sprintf(txt, "Q.z: %.4f", q.z);
+    ips200_show_string(0, 48, txt);
+    
+    /* 显示欧拉角 */
+    sprintf(txt, "Roll : %.2f", euler.roll);
+    ips200_show_string(0, 80, txt);
+    sprintf(txt, "Pitch: %.2f", euler.pitch);
+    ips200_show_string(0, 96, txt);
+    sprintf(txt, "Yaw  : %.2f", euler.yaw);
+    ips200_show_string(0, 112, txt);
+} 
+
+/* 四元数测试函数 */
+void quaternion_test(void)
+{    
+    /* 更新四元数 */
+    quaternion_update();
+    
+    /* 显示四元数和欧拉角 */
+    quaternion_display();
+    
+    /* 延时一段时间，以控制刷新率 */
+    system_delay_ms(10);
+}
+
+/* IMU中断服务函数 */
+void imu_isr(void)
+{
+    imu963ra_get_gyro();
+}
+
+

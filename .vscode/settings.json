@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "zf_common_headfile.h": "c",
+        "zf_device_icm42688.h": "c",
+        "dmx_icm42688.h": "c",
+        "ai8051u_32bit.h": "c",
+        "zf_common_clock.h": "c",
+        "contrl.h": "c",
+        "game.h": "c",
+        "seekfree_assistant.h": "c",
+        "zf_device_config.h": "c",
+        "zf_device_imu660ra.h": "c",
+        "zf_common_typedef.h": "c"
+    },
+    "files.autoGuessEncoding": true,
+    "files.candidateGuessEncodings": [
+        "utf8",
+        "gb2312"
+    ],
+    "files.encoding": "gbk",
+    "C_Cpp.default.compilerPath": "c:\\Users\\a3736\\Desktop\\stc-isp\\STCAI8051U_Library-master\\Seekfree_AI8051U_Opensource_Library\\.vscode\\c_cpp_properties.json",
+    "Codegeex.RepoIndex": true
+}

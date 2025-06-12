@@ -1,0 +1,6 @@
+#ifndef __COMMAND_H__
+#define __COMMAND_H__
+
+void to_init(void);
+
+#endif

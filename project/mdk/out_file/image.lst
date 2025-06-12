@@ -1,0 +1,186 @@
+C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE image
+OBJECT MODULE PLACED IN .\out_file\image.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\image.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROWSE 
+                    -INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\us
+                    -er;..\code) DEBUG PRINT(.\out_file\image.lst) TABS(2) OBJECT(.\out_file\image.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h  "
+    2          
+    3          //将yaw和编码器结合绘制出路径图并显示在ips200屏幕上
+    4          void image_path(void)
+    5          {
+    6   1         // 静态变量存储上一个点的坐标
+    7   1         static uint16 last_x = 160;  // 初始为屏幕中心x坐标
+    8   1         static uint16 last_y = 120;  // 初始为屏幕中心y坐标
+    9   1         static uint8 first_point = 1;  // 第一个点标志
+   10   1         static uint8 i;  // 循环变量
+   11   1         static int16 last_encoder = 0; // 存储上一次的编码器值
+   12   1         static uint16 color = RGB565_RED;  // 画线颜色
+   13   1         
+   14   1         // 局部变量声明（移至函数开头）
+   15   1         int16 xdata current_encoder;
+   16   1         float xdata speed;
+   17   1         float xdata scaling_factor;
+   18   1         float xdata angle_rad;
+   19   1         uint16 xdata new_x;
+   20   1         uint16 xdata new_y;
+   21   1         int16 xdata dx;
+   22   1         int16 xdata dy;
+   23   1         int16 xdata steps;
+   24   1         float xdata x_inc;
+   25   1         float xdata y_inc;
+   26   1         float xdata x;
+   27   1         float xdata y;
+   28   1         
+   29   1         // 获取yaw和编码器数据
+   30   1         current_encoder = encoder_data_dir_1;  // 从编码器获取数据
+   31   1         
+   32   1         // 显示当前yaw和编码器值
+   33   1      //    ips200_show_string(10, 10, "Path Visualization");
+   34   1      //    ips200_show_string(10, 30, "Yaw:");
+   35   1      //    ips200_show_float(50, 30, euler.yaw, 2, 2);
+   36   1      //    ips200_show_string(10, 50, "Encoder:");
+   37   1      //    ips200_show_int16(80, 50, current_encoder);
+   38   1         
+   39   1         // 如果按下清除按钮，重置路径
+   40   1         if(button1)
+   41   1         {
+   42   2             ips200_clear(RGB565_WHITE);
+   43   2             first_point = 1;
+   44   2             last_x = 160;
+   45   2             last_y = 120;
+   46   2             last_encoder = current_encoder;
+   47   2             
+   48   2             // 显示当前信息
+   49   2      //        ips200_show_string(10, 10, "Path Visualization");
+   50   2      //        ips200_show_string(10, 30, "Yaw:");
+   51   2      //        ips200_show_float(50, 30, euler.yaw, 3, 2);
+   52   2      //        ips200_show_string(10, 50, "Encoder:");
+   53   2      //        ips200_show_int16(80, 50, current_encoder);
+   54   2      //        ips200_show_string(10, 70, "Path Reset!");
+   55   2             system_delay_ms(300);
+   56   2      //        ips200_show_string(10, 70, "           ");
+   57   2             
+C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 2   
+
+   58   2             // 在中心点绘制起点标记
+   59   2             ips200_draw_point(last_x, last_y, RGB565_BLUE);
+   60   2             ips200_draw_point(last_x-1, last_y, RGB565_BLUE);
+   61   2             ips200_draw_point(last_x+1, last_y, RGB565_BLUE);
+   62   2             ips200_draw_point(last_x, last_y-1, RGB565_BLUE);
+   63   2             ips200_draw_point(last_x, last_y+1, RGB565_BLUE);
+   64   2             return;
+   65   2         }
+   66   1         
+   67   1         // 计算速度（编码器值代表速度）
+   68   1         speed = current_encoder;
+   69   1         
+   70   1         // 速度缩放因子
+   71   1         scaling_factor = 0.02f;  // 调整值使位移适合显示
+   72   1         
+   73   1         // 如果速度太小且不是第一个点，无需绘制
+   74   1         if(fabs(speed) < 1.0f && !first_point)return;
+   75   1         
+   76   1         // 计算位移方向和新坐标
+   77   1         angle_rad = euler.yaw * PI / 180.0f;  // 转换为弧度
+   78   1         
+   79   1         // 计算新的坐标点（速度在yaw方向上的分量）
+   80   1         new_x = last_x + (int16)(speed * scaling_factor * cos(angle_rad));
+   81   1         new_y = last_y - (int16)(speed * scaling_factor * sin(angle_rad));  // 减法因为屏幕y轴向下
+   82   1         
+   83   1         // 边界检查，确保坐标在屏幕范围内
+   84   1          new_x=new_x > 319 ? 319:
+   85   1                new_x < 1   ? 1:
+   86   1                new_x;
+   87   1          new_y=new_y > 239 ? 239:
+   88   1                new_y < 1   ? 1:
+   89   1                new_y;
+   90   1         
+   91   1         // 根据速度更改颜色
+   92   1          color=fabs(speed)>50.0f?RGB565_RED:
+   93   1                fabs(speed)>20.0f?RGB565_YELLOW:
+   94   1                RGB565_GREEN;
+   95   1         
+   96   1         // 如果是第一个点，只画点
+   97   1         if(first_point)
+   98   1         {
+   99   2             // 在初始点绘制一个特殊标记
+  100   2             ips200_draw_point(new_x, new_y, RGB565_BLUE);
+  101   2             ips200_draw_point(new_x-1, new_y, RGB565_BLUE);
+  102   2             ips200_draw_point(new_x+1, new_y, RGB565_BLUE);
+  103   2             ips200_draw_point(new_x, new_y-1, RGB565_BLUE);
+  104   2             ips200_draw_point(new_x, new_y+1, RGB565_BLUE);
+  105   2             first_point = 0;
+  106   2         }
+  107   1         else
+  108   1         {
+  109   2             // 使用Bresenham算法绘制线段
+  110   2             dx = new_x - last_x;
+  111   2             dy = new_y - last_y;
+  112   2             steps = fabs(dx) > fabs(dy) ? fabs(dx) : fabs(dy);
+  113   2             
+  114   2             if(steps > 0)
+  115   2             {
+  116   3                 x_inc = (float)dx / steps;
+  117   3                 y_inc = (float)dy / steps;
+  118   3                 x = last_x;
+  119   3                 y = last_y;
+  120   3                 
+  121   3                 for(i = 0; i <= steps; i++)
+  122   3                 {
+  123   4                     ips200_draw_point((uint16)x, (uint16)y, color);
+C251 COMPILER V5.60.0,  image                                                              12/06/25  19:59:43  PAGE 3   
+
+  124   4                     x += x_inc;
+  125   4                     y += y_inc;
+  126   4                 }
+  127   3             }
+  128   2             else
+  129   2             {
+  130   3                 // 即使steps为0，也画一个点（速度很小但不为零）
+  131   3                 ips200_draw_point(new_x, new_y, color);
+  132   3             }
+  133   2         }
+  134   1         
+  135   1         // 更新状态变量
+  136   1         last_x = new_x;
+  137   1         last_y = new_y;
+  138   1         last_encoder = current_encoder;
+  139   1         
+  140   1         // 显示当前坐标位置和速度
+  141   1      //    ips200_show_string(160, 10, "Pos:");
+  142   1      //    ips200_show_int16(190, 10, new_x);
+  143   1      //    ips200_show_string(250, 10, ",");
+  144   1      //    ips200_show_int16(260, 10, new_y);
+  145   1      //    ips200_show_string(160, 30, "Speed:");
+  146   1      //    ips200_show_int16(220, 30, speed);
+  147   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =      1137     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        50     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =        34     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

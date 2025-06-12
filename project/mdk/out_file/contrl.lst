@@ -1,0 +1,635 @@
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE contrl
+OBJECT MODULE PLACED IN .\out_file\contrl.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\code\contrl.c LARGE NOALIAS WARNINGLEVEL(3) OPTIMIZE(1,SIZE) BROWSE
+                    - INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..\libraries\zf_driver;..\u
+                    -ser;..\code) DEBUG PRINT(.\out_file\contrl.lst) TABS(2) OBJECT(.\out_file\contrl.obj) 
+
+stmt  level    source
+
+    1          #include "zf_common_headfile.h"
+    2          
+    3          //===================================================LQ_PID==============================================
+             -=====
+    4          
+    5          pid_param_t PID_angle;         // 角度环 采用位置式控制器
+    6          pid_param_t PID_angle_speed;   // 角速度环 采用增量式控制器
+    7          pid_param_t PID_MOTOR_L;       // 左轮速度环 采用位置式控制器
+    8          pid_param_t PID_MOTOR_R;       // 右轮速度环 采用位置式控制器
+    9          // pid_param_t PID_Init;          // 初始化 (移除未使用的变量)
+   10          
+   11          // PID参数设定
+   12          float PID_angle_P = 1.8f;      // 角度环P参数
+   13          float PID_angle_I = 0.0f;      // 角度环I参数 (通常角度环不需要I)
+   14          float PID_angle_D = 0.5f;      // 角度环D参数
+   15          float PID_angle_speed_P = 18.0f; // 角速度环P参数
+   16          float PID_angle_speed_I = 0.1f; // 角速度环I参数 
+   17          float PID_angle_speed_D = 0.1f; // 角速度环D参数
+   18          float PID_MOTOR_L_P = 2.23f;     // 左轮速度环P参数
+   19          float PID_MOTOR_L_I = 0.0015f;     // 左轮速度环I参数
+   20          float PID_MOTOR_L_D = 0.01f;     // 左轮速度环D参数
+   21          float PID_MOTOR_R_P = 2.23f;     // 右轮速度环P参数
+   22          float PID_MOTOR_R_I = 0.0015f;     // 右轮速度环I参数
+   23          float PID_MOTOR_R_D = 0.01f;     // 右轮速度环D参数
+   24          
+   25          // 控制系统变量
+   26          float target_angle = 0.0f;     // 目标角度
+   27          float target_speed = 0.0f;     // 目标速度
+   28          float motor_output_L = 0.0f;   // 左电机输出
+   29          float motor_output_R = 0.0f;   // 右电机输出
+   30          float angle_output = 0.0f;     // 角度环输出(角速度目标值)
+   31          float angle_speed_output = 0.0f; // 角速度环输出
+   32          
+   33          uint32 time_out =0;
+   34          
+   35          /*************************************************************************
+   36           *  函数名称：float constrain_float(float amt, float low, float high)
+   37           *  功能说明：限幅函数
+   38           *  参数说明：
+   39            * @param    amt   ： 参数
+   40            * @param    low   ： 最低值
+   41            * @param    high  ： 最高值
+   42           *  函数返回：无
+   43           *  修改时间：2020年4月1日
+   44           *  备    注：
+   45           *************************************************************************/
+   46          float constrain_float(float amt, float low, float high)
+   47          {
+   48   1          return ((amt)<(low)?(low):((amt)>(high)?(high):(amt)));
+   49   1      }
+   50          
+   51          // pid参数初始化函数
+   52          void PidInit(void)
+   53          {
+   54   1          // 角度环PID参数初始化 (位置式PID)
+   55   1          PID_angle.kp        = PID_angle_P;
+   56   1          PID_angle.ki        = PID_angle_I;
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 2   
+
+   57   1          PID_angle.kd        = PID_angle_D;
+   58   1          PID_angle.imax      = 3000;
+   59   1          PID_angle.out_p     = 0;
+   60   1          PID_angle.out_i     = 0;
+   61   1          PID_angle.out_d     = 0;
+   62   1          PID_angle.out       = 0;
+   63   1          PID_angle.integrator= 0;
+   64   1          PID_angle.last_error= 0;
+   65   1          PID_angle.last_derivative = 0;
+   66   1          PID_angle.last_t    = 0;
+   67   1          
+   68   1          // 角速度环PID参数初始化 (增量式PID)
+   69   1          PID_angle_speed.kp   = PID_angle_speed_P;
+   70   1          PID_angle_speed.ki   = PID_angle_speed_I;
+   71   1          PID_angle_speed.kd   = PID_angle_speed_D;
+   72   1          PID_angle_speed.imax = 3000;
+   73   1          PID_angle_speed.out_p= 0;
+   74   1          PID_angle_speed.out_i= 0;    
+   75   1          PID_angle_speed.out_d= 0;
+   76   1          PID_angle_speed.out  = 0;
+   77   1          PID_angle_speed.integrator = 0;
+   78   1          PID_angle_speed.last_error = 0;
+   79   1          PID_angle_speed.last_derivative = 0;
+   80   1          PID_angle_speed.last_t = 0;
+   81   1          
+   82   1          // 左轮速度环PID参数初始化 (位置式PID)
+   83   1          PID_MOTOR_L.kp        = PID_MOTOR_L_P;
+   84   1          PID_MOTOR_L.ki        = PID_MOTOR_L_I;
+   85   1          PID_MOTOR_L.kd        = PID_MOTOR_L_D;
+   86   1          PID_MOTOR_L.imax      = 3000;
+   87   1          PID_MOTOR_L.out_p     = 0;
+   88   1          PID_MOTOR_L.out_i     = 0;
+   89   1          PID_MOTOR_L.out_d     = 0;    
+   90   1          PID_MOTOR_L.out       = 0;
+   91   1          PID_MOTOR_L.integrator= 0;
+   92   1          PID_MOTOR_L.last_error= 0;
+   93   1          PID_MOTOR_L.last_derivative = 0;
+   94   1          PID_MOTOR_L.last_t    = 0;
+   95   1          
+   96   1          // 右轮速度环PID参数初始化 (位置式PID)
+   97   1          PID_MOTOR_R.kp        = PID_MOTOR_R_P;
+   98   1          PID_MOTOR_R.ki        = PID_MOTOR_R_I;
+   99   1          PID_MOTOR_R.kd        = PID_MOTOR_R_D;
+  100   1          PID_MOTOR_R.imax      = 3000;
+  101   1          PID_MOTOR_R.out_p     = 0;
+  102   1          PID_MOTOR_R.out_i     = 0;
+  103   1          PID_MOTOR_R.out_d     = 0;    
+  104   1          PID_MOTOR_R.out       = 0;
+  105   1          PID_MOTOR_R.integrator= 0;
+  106   1          PID_MOTOR_R.last_error= 0;
+  107   1          PID_MOTOR_R.last_derivative = 0;
+  108   1          PID_MOTOR_R.last_t    = 0;
+  109   1      }
+  110          
+  111          /*************************************************************************
+  112           *  函数名称：float PidLocCtrl(pid_param_t * pid, float error)
+  113           *  功能说明：pid位置式控制器输出
+  114           *  参数说明：
+  115            * @param    pid     pid参数
+  116            * @param    error   pid输入误差
+  117           *  函数返回：PID输出结果
+  118           *  修改时间：2020年4月1日
+  119           *  备    注：
+  120           *************************************************************************/
+  121          float PidLocCtrl(pid_param_t * pid, float error)
+  122          {
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 3   
+
+  123   1          /* 累积误差 */
+  124   1          pid->integrator += error;
+  125   1      
+  126   1          /* 误差限幅 */
+  127   1          pid->integrator = constrain_float(pid->integrator, -pid->imax, pid->imax);
+  128   1      
+  129   1          pid->out_p = pid->kp * error;
+  130   1          pid->out_i = pid->ki * pid->integrator;
+  131   1          pid->out_d = pid->kd * (error - pid->last_error);
+  132   1      
+  133   1          pid->last_error = error;
+  134   1      
+  135   1          pid->out = pid->out_p + pid->out_i + pid->out_d;
+  136   1      
+  137   1          return pid->out;
+  138   1      }
+  139          
+  140          /*************************************************************************
+  141           *  函数名称：float PidIncCtrl(pid_param_t * pid, float error)
+  142           *  功能说明：pid增量式控制器输出
+  143           *  参数说明：
+  144            * @param    pid     pid参数
+  145            * @param    error   pid输入误差
+  146           *  函数返回：PID输出结果   注意输出结果已经包涵了上次结果
+  147           *  修改时间：2020年4月1日
+  148           *  备    注：
+  149           *************************************************************************/
+  150          float PidIncCtrl(pid_param_t * pid, float error)
+  151          {
+  152   1          pid->out_p = pid->kp * (error - pid->last_error);
+  153   1          pid->out_i = pid->ki * error;
+  154   1          pid->out_d = pid->kd * ((error - pid->last_error) - pid->last_derivative);
+  155   1      
+  156   1          pid->last_derivative = error - pid->last_error;
+  157   1          pid->last_error = error;
+  158   1      
+  159   1          pid->out += pid->out_p + pid->out_i + pid->out_d;
+  160   1          return pid->out;
+  161   1      }
+  162          
+  163          //===================================================LQ_PID==============================================
+             -=====
+  164          //=======================================电感判断====================================================
+             -=========
+  165          float inductance_horizontal_1_max = 1;
+  166          float inductance_vertical_2_max = 1;
+  167          float inductance_vertical_3_max = 1;
+  168          float inductance_horizontal_4_max = 1;
+  169          float inductance_horizontal_1_min = 1000;
+  170          float inductance_vertical_2_min = 1000;
+  171          float inductance_vertical_3_min = 1000;
+  172          float inductance_horizontal_4_min = 1000;
+  173          float horizontal_diff_ratio_sum = 0.0f;
+  174          float vertical_diff_ratio_sum = 0.0f;
+  175          //电感区间判定
+  176          void inductance_judgment(void)
+  177          {
+  178   1          inductance_horizontal_1_max = (inductance_horizontal_1 > inductance_horizontal_1_max) ? inductance_ho
+             -rizontal_1 : inductance_horizontal_1_max;
+  179   1          inductance_vertical_2_max = (inductance_vertical_2 > inductance_vertical_2_max) ? inductance_vertical
+             -_2 : inductance_vertical_2_max;
+  180   1          inductance_vertical_3_max = (inductance_vertical_3 > inductance_vertical_3_max) ? inductance_vertical
+             -_3 : inductance_vertical_3_max;
+  181   1          inductance_horizontal_4_max = (inductance_horizontal_4 > inductance_horizontal_4_max) ? inductance_ho
+             -rizontal_4 : inductance_horizontal_4_max;
+  182   1          inductance_horizontal_1_min = (inductance_horizontal_1 < inductance_horizontal_1_min) ? inductance_ho
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 4   
+
+             -rizontal_1 : inductance_horizontal_1_min;
+  183   1          inductance_vertical_2_min = (inductance_vertical_2 < inductance_vertical_2_min) ? inductance_vertical
+             -_2 : inductance_vertical_2_min;
+  184   1          inductance_vertical_3_min = (inductance_vertical_3 < inductance_vertical_3_min) ? inductance_vertical
+             -_3 : inductance_vertical_3_min;
+  185   1          inductance_horizontal_4_min = (inductance_horizontal_4 < inductance_horizontal_4_min) ? inductance_ho
+             -rizontal_4 : inductance_horizontal_4_min;
+  186   1          ips200_show_string(10, 0, "inductance_horizontal_1_max");
+  187   1          sprintf(txt, "%08.1f", inductance_horizontal_1_max);
+  188   1          ips200_show_string(10, 1*16, txt);    
+  189   1          ips200_show_string(10, 2*16, "inductance_horizontal_1_min");
+  190   1          sprintf(txt, "%08.1f", inductance_horizontal_1_min);
+  191   1          ips200_show_string(10, 3*16, txt);    
+  192   1          ips200_show_string(10, 4*16, "inductance_vertical_2_max");
+  193   1          sprintf(txt, "%08.1f", inductance_vertical_2_max);
+  194   1          ips200_show_string(10, 5*16, txt);
+  195   1          ips200_show_string(10, 6*16, "inductance_vertical_2_min");
+  196   1          sprintf(txt, "%08.1f", inductance_vertical_2_min);
+  197   1          ips200_show_string(10, 7*16, txt);   
+  198   1          ips200_show_string(10, 8*16, "inductance_vertical_3_max");
+  199   1          sprintf(txt, "%08.1f", inductance_vertical_3_max);
+  200   1          ips200_show_string(10, 9*16, txt);
+  201   1          ips200_show_string(10, 10*16, "inductance_vertical_3_min");
+  202   1          sprintf(txt, "%08.1f", inductance_vertical_3_min);
+  203   1          ips200_show_string(10, 11*16, txt);   
+  204   1          ips200_show_string(10, 12*16, "inductance_horizontal_4_max");
+  205   1          sprintf(txt, "%08.1f", inductance_horizontal_4_max);
+  206   1          ips200_show_string(10, 13*16, txt);
+  207   1          ips200_show_string(10, 14*16, "inh4_min");
+  208   1          sprintf(txt, "%08.1f", inductance_horizontal_4_min);
+  209   1          ips200_show_string(100, 14*16, txt);   
+  210   1      }
+  211          //电感归一化
+  212          void inductance_normalization_max(void)
+  213          {
+  214   1          //电感归一化
+  215   1          inductance_horizontal_1 = (inductance_horizontal_1 / inductance_horizontal_1_max )*100;
+  216   1          inductance_vertical_2   = (inductance_vertical_2   / inductance_vertical_2_max   )*100;
+  217   1          inductance_vertical_3   = (inductance_vertical_3   / inductance_vertical_3_max   )*100;
+  218   1          inductance_horizontal_4 = (inductance_horizontal_4 / inductance_horizontal_4_max )*100;
+  219   1      }
+  220          
+  221          //电感差比和
+  222          void inductance_difference_ratio_sum(void)
+  223          {
+  224   1          // 计算水平差比和
+  225   1          float vertical_sum;
+  226   1          float vertical_diff;
+  227   1          float horizontal_diff;
+  228   1          float horizontal_sum;
+  229   1          horizontal_diff = inductance_horizontal_1 - inductance_horizontal_4; //水平电感差
+  230   1          horizontal_sum = inductance_horizontal_1 + inductance_horizontal_4; //水平电感和
+  231   1      
+  232   1          // 防止除以零
+  233   1          if (horizontal_sum > 0) {
+  234   2              horizontal_diff_ratio_sum = horizontal_diff / horizontal_sum;
+  235   2          } else {
+  236   2              horizontal_diff_ratio_sum = 0.0f; // 或者根据需要设置为其他默认值
+  237   2          }
+  238   1      
+  239   1          // 计算垂直差比和
+  240   1          vertical_diff = inductance_vertical_2 - inductance_vertical_3;
+  241   1          vertical_sum = inductance_vertical_2 + inductance_vertical_3;
+  242   1      
+  243   1          // 防止除以零
+  244   1          if (vertical_sum > 0) {
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 5   
+
+  245   2              vertical_diff_ratio_sum = vertical_diff / vertical_sum;
+  246   2          } else {
+  247   2              vertical_diff_ratio_sum = 0.0f; // 或者根据需要设置为其他默认值
+  248   2          }
+  249   1      }
+  250          
+  251          
+  252          /*************************************************************************
+  253           *  函数名称：void angle_control(void)
+  254           *  功能说明：角度环控制 - 位置式PID
+  255           *  参数说明：无
+  256           *  函数返回：无
+  257           *************************************************************************/
+  258          void angle_control(void)
+  259          {
+  260   1          float angle_error = 0.0f;
+  261   1          
+  262   1          // 获取当前角度 (IMU的yaw值)
+  263   1          float current_angle = euler.yaw;
+  264   1          
+  265   1          // 计算角度误差 (-180~180范围内)
+  266   1          angle_error = target_angle - current_angle;
+  267   1          
+  268   1          // 将角度误差限制在-180~180范围内
+  269   1          angle_error = angle_error > 180.0f ? angle_error - 360.0f 
+  270   1                      : angle_error<-180.0f  ? angle_error + 360.0f:angle_error;
+  271   1          
+  272   1          // 角度PID控制计算 (位置式)
+  273   1          angle_output = PidLocCtrl(&PID_angle, angle_error);
+  274   1          
+  275   1          // 限制角速度范围 (±150°/s)
+  276   1          angle_output = constrain_float(angle_output, -150.0f, 150.0f);
+  277   1      }
+  278          
+  279          /*************************************************************************
+  280           *  函数名称：void angle_speed_control(float target_angular_speed)
+  281           *  功能说明：角速度环控制 - 增量式PID
+  282           *  参数说明：target_angular_speed 目标角速度 (°/s)
+  283           *  函数返回：无
+  284           *************************************************************************/
+  285          void angle_speed_control(float target_angular_speed)
+  286          {
+  287   1          float angular_speed_error = 0.0f;
+  288   1          
+  289   1          // 获取当前角速度 (IMU的z轴陀螺仪值)
+  290   1          // 注意：imu963ra_gyro_z是原始值，需要转换为°/s
+  291   1          float current_angular_speed = imu660ra_gyro_transition((float)imu660ra_gyro_z - imu_data.gyro_z);
+  292   1          
+  293   1          // 计算角速度误差
+  294   1          angular_speed_error = target_angular_speed - current_angular_speed;
+  295   1          
+  296   1          // 限制输出范围 (±4000)
+  297   1          PID_angle_speed.out = constrain_float(PID_angle_speed.out, -4000.0f, 4000.0f);
+  298   1      
+  299   1          // 角速度PID控制计算 (增量式)
+  300   1          angle_speed_output = PidIncCtrl(&PID_angle_speed, angular_speed_error);
+  301   1          
+  302   1          
+  303   1      }
+  304          
+  305          /*************************************************************************
+  306           *  函数名称：void speed_control_L(void)
+  307           *  功能说明：左轮速度闭环控制 - 位置式PID
+  308           *  参数说明：无
+  309           *  函数返回：无
+  310           *************************************************************************/
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 6   
+
+  311          void speed_control_L(void)
+  312          {
+  313   1          float speed_error = 0.0f;
+  314   1          
+  315   1          // 获取左轮当前速度
+  316   1          float current_speed_L = encoder_data_dir_1;
+  317   1          
+  318   1          // 计算左轮速度误差（考虑角速度的影响）
+  319   1          // 当有转向需求时，内侧车轮应该减速
+  320   1          float target_speed_L = target_speed;
+  321   1              
+  322   1          target_speed_L = target_speed * (1.0f + angle_speed_output / 4000.0f); // 加减速
+  323   1          
+  324   1          speed_error = target_speed_L - current_speed_L;
+  325   1          
+  326   1          // 速度PID控制计算 (位置式)
+  327   1          motor_output_L = PidLocCtrl(&PID_MOTOR_L, speed_error);
+  328   1          
+  329   1          // 限制输出范围
+  330   1          motor_output_L = constrain_float(motor_output_L, 1.0f, 5000.0f);
+  331   1      }
+  332          
+  333          /*************************************************************************
+  334           *  函数名称：void speed_control_R(void)
+  335           *  功能说明：右轮速度闭环控制 - 位置式PID
+  336           *  参数说明：无
+  337           *  函数返回：无
+  338           *************************************************************************/
+  339          void speed_control_R(void)
+  340          {
+  341   1          float speed_error = 0.0f;
+  342   1          
+  343   1          // 获取右轮当前速度
+  344   1          float current_speed_R = encoder_data_dir_2;
+  345   1          
+  346   1          // 计算右轮速度误差（考虑角速度的影响）
+  347   1          // 当有转向需求时，内侧车轮应该减速
+  348   1          float target_speed_R = target_speed;
+  349   1          
+  350   1          target_speed_R = target_speed * (1.0f - angle_speed_output / 4000.0f); // 加减速
+  351   1          
+  352   1          speed_error = target_speed_R - current_speed_R;
+  353   1          
+  354   1          // 速度PID控制计算 (位置式)
+  355   1          motor_output_R = PidLocCtrl(&PID_MOTOR_R, speed_error);
+  356   1          
+  357   1          // 限制输出范围
+  358   1          motor_output_R = constrain_float(motor_output_R, 1.0f, 5000.0f);
+  359   1      }
+  360          
+  361          /*************************************************************************
+  362           *  函数名称：void speed_control(void)
+  363           *  功能说明：整体速度控制 - 分别控制左右轮速度
+  364           *  参数说明：无
+  365           *  函数返回：无
+  366           *************************************************************************/
+  367          void speed_control(void)
+  368          {
+  369   1          // 分别控制左右车轮速度
+  370   1          speed_control_L();
+  371   1          speed_control_R();
+  372   1          
+  373   1          // 角速度补偿（差速转向）
+  374   1          // 当需要转向时，两轮输出差异将由各自的PID控制器产生
+  375   1          // 此处可以进行额外的微调
+  376   1          // if(angle_speed_output != 0) {
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 7   
+
+  377   1          //     // 在各轮速度控制基础上增加角速度差分
+  378   1          //     float steering_factor = 0.5f; // 转向系数，可根据需要调整
+  379   1          //     motor_output_L -= angle_speed_output * steering_factor;
+  380   1          //     motor_output_R += angle_speed_output * steering_factor;
+  381   1              
+  382   1          //     // 再次限制输出范围
+  383   1          //     motor_output_L = constrain_float(motor_output_L, 1.0f, 5000.0f);
+  384   1          //     motor_output_R = constrain_float(motor_output_R, 1.0f, 5000.0f);
+  385   1          // }
+  386   1      }
+  387          
+  388          /*************************************************************************
+  389           *  函数名称：void control_update(void)
+  390           *  功能说明：整体控制系统更新函数
+  391           *  参数说明：无
+  392           *  函数返回：无
+  393           *************************************************************************/
+  394          void control_update(void)
+  395          {
+  396   1          // 1. 角度环 - 输入：目标角度与当前角度，输出：目标角速度
+  397   1          angle_control();
+  398   1          
+  399   1          // 2. 角速度环 - 输入：目标角速度与当前角速度，输出：角速度偏差
+  400   1          angle_speed_control(angle_output);
+  401   1          
+  402   1          // 3. 速度环 - 输入：目标速度与当前速度，输出：电机控制信号
+  403   1          speed_control(); // 调用更新后的速度控制函数
+  404   1      }
+  405          
+  406          /*************************************************************************
+  407           *  函数名称：void control_test(void)
+  408           *  功能说明：控制系统测试函数
+  409           *  参数说明：无
+  410           *  函数返回：无
+  411           *************************************************************************/
+  412          void control_test(void)
+  413          {
+  414   1      //    uint8 exit_flag = 0;
+  415   1      //    
+  416   1      //    ips200_clear(RGB565_WHITE);
+  417   1      //    ips200_show_string(10, 10, "Control System Test");
+  418   1      //    ips200_show_string(10, 30, "Press OK to exit");
+  419   1      //    
+  420   1      //    // 设定测试参数
+  421   1      //    target_angle = 0.0f;  // 保持直线
+  422   1      //    target_speed = 30.0f; // 适当速度
+  423   1      //    
+  424   1      //    while(!exit_flag)
+  425   1      //    {
+  426   1      //        // 更新按键状态
+  427   1      //        button_entry();
+  428   1      //        
+  429   1      //        // 更新控制系统
+  430   1      //        control_update();
+  431   1      //        
+  432   1      //        // 显示当前状态
+  433   1      //        sprintf(txt, "Target Angle: %05.2f", target_angle);
+  434   1      //        ips200_show_string(10, 50, txt);
+  435   1      //        
+  436   1      //        sprintf(txt, "Current Angle: %05.2f", euler.yaw);
+  437   1      //        ips200_show_string(10, 70, txt);
+  438   1      //        
+  439   1      //        sprintf(txt, "Target Speed: %05.2f", target_speed);
+  440   1      //        ips200_show_string(10, 90, txt);
+  441   1      //        
+  442   1      //        sprintf(txt, "L Encoder: %05d", encoder_data_dir_1);
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 8   
+
+  443   1      //        ips200_show_string(10, 110, txt);
+  444   1      //        
+  445   1      //        sprintf(txt, "R Encoder: %05d", encoder_data_dir_2);
+  446   1      //        ips200_show_string(10, 130, txt);
+  447   1      //        
+  448   1      //        sprintf(txt, "L Output: %08.2f", motor_output_L);
+  449   1      //        ips200_show_string(10, 150, txt);
+  450   1      //        
+  451   1      //        sprintf(txt, "R Output: %08.2f", motor_output_R);
+  452   1      //        ips200_show_string(10, 170, txt);
+  453   1      //        // 检测退出按键
+  454   1      //        if(button5)
+  455   1      //        {
+  456   1      //            exit_flag = 1;
+  457   1      //            
+  458   1      //        }
+  459   1      //        system_delay_ms(5);
+  460   1      //    }
+  461   1      }
+  462          //控制初始化
+  463          void control_init(void)
+  464          {
+  465   1          pwm_init(PWM_L1, 4000, 50);
+  466   1        pwm_init(PWM_L2, 4000, 50);
+  467   1          pwm_init(PWM_R1, 4000, 50);   
+  468   1          pwm_init(PWM_R2, 4000, 50);   
+  469   1      }
+  470          //控制输出
+  471          void control_output(void)
+  472          {
+  473   1          control_update();
+  474   1          motor_output_L = constrain_float(motor_output_L, 0, 5000);
+  475   1          motor_output_R = constrain_float(motor_output_R, 0, 5000);
+  476   1          if(motor_output_L > 0)
+  477   1          {
+  478   2            pwm_set_duty(PWM_L1, motor_output_L);
+  479   2          pwm_set_duty(PWM_L2, motor_output_L);
+  480   2              //待定正转
+  481   2          }
+  482   1          else
+  483   1          {
+  484   2              //待定反转
+  485   2            pwm_set_duty(PWM_L1, -motor_output_L);
+  486   2            pwm_set_duty(PWM_L2, -motor_output_L);
+  487   2          }
+  488   1          if(motor_output_R > 0)
+  489   1          {
+  490   2              pwm_set_duty(PWM_R1, motor_output_R);
+  491   2            pwm_set_duty(PWM_R2, motor_output_R);
+  492   2              //待定正转
+  493   2          }
+  494   1          else
+  495   1          {
+  496   2              //待定反转
+  497   2              pwm_set_duty(PWM_R1, -motor_output_R);
+  498   2            pwm_set_duty(PWM_R2, -motor_output_R);
+  499   2          }
+  500   1      }
+  501          
+  502          //速度环调试修正
+  503          void speed_debug(void)
+  504          {
+  505   1          //抑制其他环
+  506   1          angle_speed_output=0;
+  507   1          angle_output=0;
+  508   1          speed_control();
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 9   
+
+  509   1          control_output();
+  510   1      }
+  511          //角度环调试修正
+  512          void angle_debug(void)
+  513          {
+  514   1          control_update();
+  515   1          control_output();
+  516   1      }
+  517          //核心循迹函数
+  518          //暂时注释目标速度
+  519          void core_trace(void)
+  520          {
+  521   1          float total_inductance = 0.0f;
+  522   1          float angle_correction = 0.0f;
+  523   1          
+  524   1          // 3. 计算目标角度
+  525   1          // 根据水平和垂直电感的差比和计算目标偏航角
+  526   1          // 水平差比和控制主要转向，垂直差比和用于辅助判断
+  527   1          
+  528   1          // 水平电感差比和作为主要控制量
+  529   1          angle_correction = horizontal_diff_ratio_sum  * 90.0f; // 比例因子30.0可根据实际情况调整
+  530   1          
+  531   1          // 垂直电感差异用于辅助判断特殊情况
+  532   1          // 如十字路口、锐角弯等
+  533   1          if(vertical_diff_ratio_sum > 0.7f || vertical_diff_ratio_sum < -0.7f) {
+  534   2              // 垂直电感差异很大时，可能是特殊路况
+  535   2              // 可以进行特殊处理，比如减速或增大转向系数
+  536   2              angle_correction += vertical_diff_ratio_sum * 90.0f; // 增强转向
+  537   2              // target_speed = 20.0f; // 降低速度
+  538   2          } else {
+  539   2              // 正常路况
+  540   2              // target_speed = 30.0f; // 正常速度
+  541   2          }
+  542   1      //=========================================元素判断=======================================
+  543   1          // 根据电感总量判断是否在赛道上
+  544   1          total_inductance = inductance_horizontal_1 + inductance_horizontal_4 + 
+  545   1                                  inductance_vertical_2 + inductance_vertical_3;
+  546   1          
+  547   1          if(total_inductance < 1.0f) {
+  548   2              // 电感总量太小，可能偏离赛道
+  549   2              // 进入紧急处理模式
+  550   2              time_out++;
+  551   2              if(time_out > 10000)
+  552   2              {
+  553   3                  target_speed = 10.0f; // 大幅降低速度
+  554   3                  // 可以根据上一次的转向继续转向，或停车等待
+  555   3              }
+  556   2          }
+  557   1          else
+  558   1          {
+  559   2              time_out = 0;
+  560   2          }
+  561   1      //=========================================控制区=========================================
+  562   1          // 4. 设置目标角度
+  563   1          target_angle = euler.yaw - angle_correction; // 当前角度 - 修正角度
+  564   1          
+  565   1          // 确保角度在-180到180范围内
+  566   1          target_angle = (target_angle > 180.0f) ? (target_angle - 360.0f) : 
+  567   1                        ((target_angle < -180.0f) ? (target_angle + 360.0f) : target_angle);
+  568   1          
+  569   1      
+  570   1          
+  571   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+C251 COMPILER V5.60.0,  contrl                                                             12/06/25  19:59:43  PAGE 10  
+
+  code size            =      4969     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =       404     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =       465     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,182 @@
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 1   
+
+
+C251 COMPILER V5.60.0, COMPILATION OF MODULE zf_driver_adc
+OBJECT MODULE PLACED IN .\out_file\zf_driver_adc.obj
+COMPILER INVOKED BY: C:\Keil_v5\C251\BIN\C251.EXE ..\..\libraries\zf_driver\zf_driver_adc.c LARGE NOALIAS WARNINGLEVEL(3
+                    -) OPTIMIZE(1,SIZE) BROWSE INCDIR(..\..\libraries\zf_common;..\..\libraries\zf_components;..\..\libraries\zf_device;..\..
+                    -\libraries\zf_driver;..\user;..\code) DEBUG PRINT(.\out_file\zf_driver_adc.lst) TABS(2) OBJECT(.\out_file\zf_driver_adc.
+                    -obj) 
+
+stmt  level    source
+
+    1          /********************************************************************************************************
+             -*************
+    2          * AI8051U Opensourec Library 即（AI8051U 开源库）是一个基于官方 SDK 接口的第三方开源库
+    3          * Copyright (c) 2022 SEEKFREE 逐飞科技
+    4          *
+    5          * 本文件是STC 开源库的一部分
+    6          *
+    7          * AI8051U 开源库 是免费软件
+    8          * 您可以根据自由软件基金会发布的 GPL（GNU General Public License，即 GNU通用公共许可证）的条款
+    9          * 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修改它
+   10          *
+   11          * 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+   12          * 甚至没有隐含的适销性或适合特定用途的保证
+   13          * 更多细节请参见 GPL
+   14          *
+   15          * 您应该在收到本开源库的同时收到一份 GPL 的副本
+   16          * 如果没有，请参阅<https://www.gnu.org/licenses/>
+   17          *
+   18          * 额外注明：
+   19          * 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+   20          * 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+   21          * 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+   22          * 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
+   23          *
+   24          * 文件名称          
+   25          * 公司名称          成都逐飞科技有限公司
+   26          * 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+   27          * 开发环境          MDK FOR C251
+   28          * 适用平台          AI8051U
+   29          * 店铺链接          https://seekfree.taobao.com/
+   30          *
+   31          * 修改记录
+   32          * 日期              作者           备注
+   33          * 2024-08-01        大W            first version
+   34          *********************************************************************************************************
+             -***********/
+   35          
+   36          #include "zf_common_debug.h"
+   37          #include "zf_driver_adc.h"
+   38          
+   39          
+   40          static uint8 adc_resolution = {ADC_12BIT};
+   41          
+   42          
+   43          //-------------------------------------------------------------------------------------------------------
+             -------------
+   44          // 函数简介     ADC转换N次，平均值滤波
+   45          // 参数说明     ch              选择ADC通道
+   46          // 参数说明     resolution      分辨率(8位 10位 12位)
+   47          // 参数说明     count           转换次数
+   48          // 返回参数     void
+   49          // 使用示例     adc_mean_filter(ADC_IN0_A0, ADC_8BIT,5);  //采集A0端口返回8位分辨率的AD值，采集五次取平均
+             -值
+   50          //-------------------------------------------------------------------------------------------------------
+             -------------
+   51          uint16 adc_mean_filter_convert (adc_channel_enum ch, const uint8 count)
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 2   
+
+   52          {
+   53   1          uint8 i;
+   54   1          uint32 sum;
+   55   1      
+   56   1        //zf_assert(count);//断言次数不能为0
+   57   1        
+   58   1          sum = 0;
+   59   1          for(i=0; i<count; i++)
+   60   1          {
+   61   2              sum += adc_convert(ch);
+   62   2          }
+   63   1      
+   64   1          sum = sum/count;
+   65   1          return sum;
+   66   1      }
+   67          
+   68          //-------------------------------------------------------------------------------------------------------
+             -------------
+   69          //  @brief      ADC转换一次
+   70          //  @param      adcn            选择ADC通道
+   71          //  @param      resolution      分辨率
+   72          //  @return     void
+   73          //  Sample usage:               adc_convert(ADC_P10, ADC_10BIT);
+   74          //-------------------------------------------------------------------------------------------------------
+             -------------
+   75          uint16 adc_convert(adc_channel_enum ch)
+   76          {
+   77   1          uint16 adc_value;
+   78   1          
+   79   1          ADC_CONTR &= (0xF0);      //清除ADC_CHS[3:0] ： ADC 模拟通道选择位
+   80   1          ADC_CONTR |= ch;
+   81   1          
+   82   1          ADC_CONTR |= 0x40;        // 启动 AD 转换
+   83   1          
+   84   1          while (!(ADC_CONTR & 0x20));    // 查询 ADC 完成标志
+   85   1          
+   86   1          ADC_CONTR &= ~0x20;       // 清完成标志
+   87   1          
+   88   1          adc_value = ADC_RES;        //存储 ADC 的 12 位结果的高 4 位
+   89   1          adc_value <<= 8;
+   90   1          adc_value |= ADC_RESL;      //存储 ADC 的 12 位结果的低 8 位
+   91   1          
+   92   1          ADC_RES = 0;
+   93   1          ADC_RESL = 0;
+   94   1          
+   95   1          adc_value >>= adc_resolution; //取多少位
+   96   1          
+   97   1          
+   98   1          return adc_value;
+   99   1      }
+  100          
+  101          //-------------------------------------------------------------------------------------------------------
+             -------------
+  102          // 函数简介     ADC初始化
+  103          // 参数说明     ch            ch(可选择范围由zf_adc.h内adc_channel_enum枚举值确定)
+  104          // 参数说明     resolution       resolution(可选择范围由zf_adc.h内adc_resolution_enum枚举值确定)
+  105          // 返回参数     void
+  106          // 使用示例     adc_init(ADC_P10, ADC_12BIT);//初始化P10引脚为ADC功能，12位分辨率
+  107          //-------------------------------------------------------------------------------------------------------
+             -------------
+  108          void adc_init(adc_channel_enum ch, adc_resolution_enum resolution)
+  109          {
+  110   1          ADC_CONTR |= 1 << 7;        //1 ：打开 ADC 电源
+  111   1          
+  112   1          ADC_CONTR &= (0xF0);      //清除ADC_CHS[3:0] ： ADC 模拟通道选择位
+  113   1          ADC_CONTR |= ch;
+C251 COMPILER V5.60.0,  zf_driver_adc                                                      11/06/25  16:16:28  PAGE 3   
+
+  114   1          
+  115   1          if((ch >> 3) == 1) //P0.0
+  116   1          {
+  117   2              //IO口需要设置为高阻输入
+  118   2              P0M0 &= ~(1 << (ch & 0x07));
+  119   2              P0M1 |= (1 << (ch & 0x07));
+  120   2          }
+  121   1          else if((ch >> 3) == 0) //P1.0
+  122   1          {
+  123   2              //IO口需要设置为高阻输入
+  124   2              P1M0 &= ~(1 << (ch & 0x07));
+  125   2              P1M1 |= (1 << (ch & 0x07));
+  126   2          }
+  127   1          
+  128   1          ADCCFG |= ADC_SYSclk_DIV_16 & 0x0F;     //ADC时钟频率SYSclk/16&0x0F;
+  129   1          
+  130   1          ADCCFG |= 1 << 5;             //转换结果右对齐。 ADC_RES 保存结果的高 2 位， ADC_RESL 保存结果的低 8 位。
+  131   1        
+  132   1        adc_resolution = resolution;           // 记录ADC精度 将在采集时使用
+  133   1      }
+
+
+Module Information          Static   Overlayable
+------------------------------------------------
+  code size            =       396     ------
+  ecode size           =    ------     ------
+  data size            =    ------     ------
+  idata size           =    ------     ------
+  pdata size           =    ------     ------
+  xdata size           =        17     ------
+  xdata-const size     =    ------     ------
+  edata size           =    ------     ------
+  bit size             =    ------     ------
+  ebit size            =    ------     ------
+  bitaddressable size  =    ------     ------
+  ebitaddressable size =    ------     ------
+  far data size        =    ------     ------
+  huge data size       =    ------     ------
+  const size           =    ------     ------
+  hconst size          =         6     ------
+End of Module Information.
+
+
+C251 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
