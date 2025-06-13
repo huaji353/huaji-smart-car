@@ -110,22 +110,6 @@
 4. **core_trace(void)** - 核心循迹函数
    - 实现小车的循迹控制逻辑（小车实际下地两天不到驱动全炸了）
 
-### 使用示例
-```c
-// 初始化PID控制器和控制系统
-PidInit();
-control_init();
-
-// 在主循环中更新控制系统
-control_update();
-
-// 输出到电机
-control_output();
-
-// 测试控制系统
-control_test();
-```
-
 ## key.c 和 key.h 功能说明
 
 ### 按键定义
@@ -174,27 +158,6 @@ control_test();
 
 ### 常量
 1. **LONG_PRESS_TIME** - 长按时间阈值，默认为10（约400ms）
-
-### 使用示例
-```c
-// 初始化按键
-key_into();
-
-// 在主循环中处理按键输入
-button_entry();
-
-// 检查按键状态
-if(button1) {
-    // 按键1被按下，执行相应动作
-}
-
-if(button5) {
-    // 确认按键被按下，执行相应动作
-}
-
-// 测试按键状态
-key_text();
-```
 
 ## IMU.c 功能说明
 
@@ -345,13 +308,6 @@ key_text();
    - 结合yaw角度和编码器数据绘制路径
    - 在IPS200屏幕上实时显示运动轨迹
    - 支持路径重置和颜色变化
-   
-### 使用示例
-```c
-// 绘制路径
-image_path();
-
-```
 
 ## 逐飞助手功能说明
 
@@ -406,19 +362,5 @@ image_path();
    - 角度数据
    - 角速度数据
    - 电感数据
+## 所有使用方式均放在菜单以及逐飞助手通道中
 
-### 使用示例
-```c
-// 初始化逐飞助手
-seekfree_assistant_oscilloscope_init();
-
-// 在主循环中处理数据
-seekfree_assistant_data_analysis();
-
-// 发送数据到示波器
-seekfree_assistant_oscilloscope_data.dat[0] = value1;
-seekfree_assistant_oscilloscope_data.dat[1] = value2;
-seekfree_assistant_oscilloscope_data.dat[2] = value3;
-seekfree_assistant_oscilloscope_data.dat[3] = value4;
-seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
-```
