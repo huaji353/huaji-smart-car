@@ -1,4 +1,4 @@
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 1   
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 1   
 
 
 C251 COMPILER V5.60.0, COMPILATION OF MODULE IMU
@@ -66,7 +66,7 @@ stmt  level    source
    52          // 返回参数     void
    53          // 使用示例     quaternion_init();
    54          //-------------------------------------------------------------------------------------------------------
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 2   
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 2   
 
              -------------
    55          void quaternion_init(void) 
@@ -134,7 +134,7 @@ stmt  level    source
   113   2              /* 更新进度 */
   114   2              if(i % 10 == 0) 
   115   2              {
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 3   
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 3   
 
   116   3                  sprintf(txt, "progress: %d%%", (int)(i * 100 / samples));
   117   3                  ips200_show_string(0, 40, txt);
@@ -202,7 +202,7 @@ stmt  level    source
   175   1          float qDot1, qDot2, qDot3, qDot4;
   176   1          
   177   1          /* 读取IMU传感器数据 */
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 4   
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 4   
 
   178   1          imu660ra_get_gyro();
   179   1          
@@ -235,148 +235,134 @@ stmt  level    source
   206   1          /* 计算欧拉角 */
   207   1          euler = quaternion_to_euler(q);
   208   1      }
-  209          
-  210          //-------------------------------------------------------------------------------------------------------
+  209          //-------------------------------------------------------------------------------------------------------
              -------------
-  211          // 函数简介     获取当前四元数函数
-  212          // 参数说明     void
-  213          // 返回参数     Quaternion: 当前的四元数值
-  214          // 使用示例     Quaternion current_q = get_quaternion();
-  215          //-------------------------------------------------------------------------------------------------------
+  210          // 函数简介     四元数转欧拉角函数，仅计算偏航角
+  211          // 参数说明     q: 输入的四元数
+  212          // 返回参数     EulerAngle: 计算得到的欧拉角（仅偏航角有效）
+  213          // 使用示例     EulerAngle angles = quaternion_to_euler(current_q);
+  214          //-------------------------------------------------------------------------------------------------------
              -------------
-  216          Quaternion get_quaternion(void) 
-  217          {
-  218   1          return q;
-  219   1      }
-  220          
-  221          //-------------------------------------------------------------------------------------------------------
-             -------------
-  222          // 函数简介     四元数转欧拉角函数，仅计算偏航角
-  223          // 参数说明     q: 输入的四元数
-  224          // 返回参数     EulerAngle: 计算得到的欧拉角（仅偏航角有效）
-  225          // 使用示例     EulerAngle angles = quaternion_to_euler(current_q);
-  226          //-------------------------------------------------------------------------------------------------------
-             -------------
-  227          EulerAngle quaternion_to_euler(Quaternion q) 
-  228          {
-  229   1          float siny_cosp, cosy_cosp;
+  215          EulerAngle quaternion_to_euler(Quaternion q) 
+  216          {
+  217   1          float siny_cosp, cosy_cosp;
+  218   1          
+  219   1          /* 初始化其他角度为0 */
+  220   1          euler.roll = 0.0f;
+  221   1          euler.pitch = 0.0f;
+  222   1          
+  223   1          /* 计算偏航角 (Yaw) */
+  224   1          siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+  225   1          cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+  226   1          euler.yaw = atan2(siny_cosp, cosy_cosp);
+  227   1          
+  228   1          /* 转换为角度 */
+  229   1          euler.yaw = euler.yaw * 180.0f / PI;
   230   1          
-  231   1          /* 初始化其他角度为0 */
-  232   1          euler.roll = 0.0f;
-  233   1          euler.pitch = 0.0f;
-  234   1          
-  235   1          /* 计算偏航角 (Yaw) */
-  236   1          siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
-  237   1          cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-  238   1          euler.yaw = atan2(siny_cosp, cosy_cosp);
-  239   1          
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 5   
+  231   1          return euler;
+  232   1      }
+  233          
+  234          //-------------------------------------------------------------------------------------------------------
+             -------------
+  235          // 函数简介     四元数显示函数，用于在IPS屏幕上显示四元数和欧拉角
+  236          // 参数说明     void
+  237          // 返回参数     void
+  238          // 使用示例     quaternion_display();
+  239          //-------------------------------------------------------------------------------------------------------
+             -------------
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 5   
 
-  240   1          /* 转换为角度 */
-  241   1          euler.yaw = euler.yaw * 180.0f / PI;
-  242   1          
-  243   1          return euler;
-  244   1      }
-  245          
-  246          //-------------------------------------------------------------------------------------------------------
+  240          void quaternion_display(void) 
+  241          {
+  242   1          /* 显示四元数 */
+  243   1          sprintf(txt, "Q.w: %.4f", q.w);
+  244   1          ips200_show_string(0, 0, txt);
+  245   1          sprintf(txt, "Q.x: %.4f", q.x);
+  246   1          ips200_show_string(0, 16, txt);
+  247   1          sprintf(txt, "Q.y: %.4f", q.y);
+  248   1          ips200_show_string(0, 32, txt);
+  249   1          sprintf(txt, "Q.z: %.4f", q.z);
+  250   1          ips200_show_string(0, 48, txt);
+  251   1          
+  252   1          /* 显示欧拉角 */
+  253   1          sprintf(txt, "Yaw  : %.2f", euler.yaw);
+  254   1          ips200_show_string(0, 112, txt);
+  255   1      }
+  256          
+  257          //-------------------------------------------------------------------------------------------------------
              -------------
-  247          // 函数简介     四元数显示函数，用于在IPS屏幕上显示四元数和欧拉角
-  248          // 参数说明     void
-  249          // 返回参数     void
-  250          // 使用示例     quaternion_display();
-  251          //-------------------------------------------------------------------------------------------------------
+  258          // 函数简介     IMU中断服务函数，用于处理IMU数据更新
+  259          // 参数说明     void
+  260          // 返回参数     void
+  261          // 使用示例     由定时器中断自动调用
+  262          //-------------------------------------------------------------------------------------------------------
              -------------
-  252          void quaternion_display(void) 
-  253          {
-  254   1          /* 显示四元数 */
-  255   1          sprintf(txt, "Q.w: %.4f", q.w);
-  256   1          ips200_show_string(0, 0, txt);
-  257   1          sprintf(txt, "Q.x: %.4f", q.x);
-  258   1          ips200_show_string(0, 16, txt);
-  259   1          sprintf(txt, "Q.y: %.4f", q.y);
-  260   1          ips200_show_string(0, 32, txt);
-  261   1          sprintf(txt, "Q.z: %.4f", q.z);
-  262   1          ips200_show_string(0, 48, txt);
-  263   1          
-  264   1          /* 显示欧拉角 */
-  265   1          sprintf(txt, "Yaw  : %.2f", euler.yaw);
-  266   1          ips200_show_string(0, 112, txt);
+  263          void imu_isr(void)
+  264          {
+  265   1          /* 更新四元数 */
+  266   1          quaternion_update();
   267   1      }
-  268          
-  269          //-------------------------------------------------------------------------------------------------------
+  268          //-------------------------------------------------------------------------------------------------------
              -------------
-  270          // 函数简介     IMU中断服务函数，用于处理IMU数据更新
-  271          // 参数说明     void
-  272          // 返回参数     void
-  273          // 使用示例     由定时器中断自动调用
-  274          //-------------------------------------------------------------------------------------------------------
+  269          // 函数简介     简易惯性导航存入
+  270          // 参数说明     void
+  271          // 返回参数     void
+  272          // 使用示例     encoder_ins_infile();
+  273          //-------------------------------------------------------------------------------------------------------
              -------------
-  275          void imu_isr(void)
-  276          {
-  277   1          /* 更新四元数 */
-  278   1          quaternion_update();
-  279   1      }
-  280          //-------------------------------------------------------------------------------------------------------
-             -------------
-  281          // 函数简介     简易惯性导航存入
-  282          // 参数说明     void
-  283          // 返回参数     void
-  284          // 使用示例     encoder_ins_infile();
-  285          //-------------------------------------------------------------------------------------------------------
-             -------------
-  286          void encoder_ins_infile(void) 
-  287          {
-  288   1          static uint8 encoder_ins_last_memory_flag=0;
-  289   1          encoder_integral_flag=1;
-  290   1          if(!encoder_ins_memory_flag){encoder_ins_last_memory_flag=0;return;}//存储开启标志
-  291   1          if(!encoder_ins_last_memory_flag){encoder_ins_num=0;encoder_ins_last_memory_flag=1;}//上一次比对
+  274          void encoder_ins_infile(void) 
+  275          {
+  276   1          static uint8 encoder_ins_last_memory_flag=0;
+  277   1          encoder_integral_flag=1;
+  278   1          if(!encoder_ins_memory_flag){encoder_ins_last_memory_flag=0;return;}//存储开启标志
+  279   1          if(!encoder_ins_last_memory_flag){encoder_ins_num=0;encoder_ins_last_memory_flag=1;}//上一次比对
              -判断是否第一次进入存储并归位
-  292   1          if(encoder_ins_num==0){encoder_file[encoder_ins_num]=euler.yaw;encoder_ins_num++;}//第一次存储�
+  280   1          if(encoder_ins_num==0){encoder_file[encoder_ins_num]=euler.yaw;encoder_ins_num++;}//第一次存储�
              -�接记录当前角度
-  293   1          if(encoder_ins_num==1000)return;
-  294   1          if(encoder_integral_1+encoder_integral_2<speed_threshold)return;//脉冲计数
-  295   1          encoder_integral_1=0;
-  296   1          encoder_integral_2=0;
-  297   1          // encoder_del=encoder_data_dir_1-encoder_data_dir_2;
-C251 COMPILER V5.60.0,  IMU                                                                12/06/25  20:23:03  PAGE 6   
+  281   1          if(encoder_ins_num==1000)return;
+  282   1          if(encoder_integral_1+encoder_integral_2<speed_threshold)return;//脉冲计数
+  283   1          encoder_integral_1=0;
+  284   1          encoder_integral_2=0;
+  285   1          // encoder_del=encoder_data_dir_1-encoder_data_dir_2;
+  286   1          encoder_file[encoder_ins_num]=euler.yaw;
+  287   1          encoder_ins_num++;
+  288   1      }
+  289          //-------------------------------------------------------------------------------------------------------
+             -------------
+  290          // 函数简介     简易惯性导航实现
+  291          // 参数说明     void
+  292          // 返回参数     void
+  293          // 使用示例     encoder_ins();
+  294          //-------------------------------------------------------------------------------------------------------
+             -------------
+  295          void encoder_ins(void)
+  296          {
+  297   1          static uint8 frist_in_flag;//第一次进入标志位
+C251 COMPILER V5.60.0,  IMU                                                                15/06/25  00:02:59  PAGE 6   
 
-  298   1          encoder_file[encoder_ins_num]=euler.yaw;
-  299   1          encoder_ins_num++;
-  300   1      }
-  301          //-------------------------------------------------------------------------------------------------------
-             -------------
-  302          // 函数简介     简易惯性导航实现
-  303          // 参数说明     void
-  304          // 返回参数     void
-  305          // 使用示例     encoder_ins();
-  306          //-------------------------------------------------------------------------------------------------------
-             -------------
-  307          void encoder_ins(void)
-  308          {
-  309   1          static uint8 frist_in_flag;//第一次进入标志位
-  310   1          static uint16 encoder_ins_num_record;
-  311   1          if(!ins_go_flag){frist_in_flag=0;return;}
-  312   1          if(!frist_in_flag){encoder_ins_num_record=encoder_ins_num;encoder_ins_num=0;frist_in_flag=1;}//记录
+  298   1          static uint16 encoder_ins_num_record;
+  299   1          if(!ins_go_flag){frist_in_flag=0;return;}
+  300   1          if(!frist_in_flag){encoder_ins_num_record=encoder_ins_num;encoder_ins_num=0;frist_in_flag=1;}//记录
              -惯性存储的总数，并归位计数
-  313   1          target_speed=ins_speed;//总控速度
-  314   1          target_angle=encoder_file[encoder_ins_num];//总控角度
-  315   1          if(encoder_integral_1+encoder_integral_2>=speed_threshold){//计数更新
-  316   2              encoder_integral_1=0;
-  317   2              encoder_integral_2=0;
-  318   2              encoder_ins_num++;
-  319   2          }
-  320   1          if(encoder_ins_num>=encoder_ins_num_record){ins_go_flag=0;target_speed=0;return;}//停车
-  321   1      }
+  301   1          target_speed=ins_speed;//总控速度
+  302   1          target_angle=encoder_file[encoder_ins_num];//总控角度
+  303   1          if(encoder_integral_1+encoder_integral_2>=speed_threshold){//计数更新
+  304   2              encoder_integral_1=0;
+  305   2              encoder_integral_2=0;
+  306   2              encoder_ins_num++;
+  307   2          }
+  308   1          if(encoder_ins_num>=encoder_ins_num_record){ins_go_flag=0;target_speed=0;return;}//停车
+  309   1      }
 
 
 Module Information          Static   Overlayable
 ------------------------------------------------
-  code size            =      3424     ------
+  code size            =      3387     ------
   ecode size           =    ------     ------
   data size            =    ------     ------
   idata size           =    ------     ------
   pdata size           =    ------     ------
-  xdata size           =      4124     ------
+  xdata size           =      4120     ------
   xdata-const size     =    ------     ------
   edata size           =    ------     ------
   bit size             =    ------     ------

@@ -178,10 +178,10 @@ void quaternion_update(void)
     imu660ra_get_gyro();
     
     /* 处理陀螺仪数据，减去偏置并转换为弧度/秒 */
-    gx = imu660ra_gyro_transition((float)imu660ra_gyro_x - imu_data.gyro_x);
-    gy = imu660ra_gyro_transition((float)imu660ra_gyro_y - imu_data.gyro_y);
-    gz = imu660ra_gyro_transition((float)imu660ra_gyro_z - imu_data.gyro_z);
-    
+    gx = DEG_TO_RAD(imu660ra_gyro_transition((float)imu660ra_gyro_x - imu_data.gyro_x));
+    gy = DEG_TO_RAD(imu660ra_gyro_transition((float)imu660ra_gyro_y - imu_data.gyro_y));
+    gz = DEG_TO_RAD(imu660ra_gyro_transition((float)imu660ra_gyro_z - imu_data.gyro_z));
+
     /* 应用低通滤波 */
     gx = IMU_lvbo(gx);
     gy = IMU_lvbo(gy);
@@ -195,10 +195,10 @@ void quaternion_update(void)
     qDot4 = 0.5f * (q.w * gz + q.x * gy - q.y * gx);
     
     /* 使用欧拉积分法更新四元数 */
-    q.w = q.w + qDot1 * SAMPLE_FREQ/4.8;
-    q.x = q.x + qDot2 * SAMPLE_FREQ/4.8;
-    q.y = q.y + qDot3 * SAMPLE_FREQ/4.8;
-    q.z = q.z + qDot4 * SAMPLE_FREQ/4.8;
+    q.w = q.w + qDot1 * SAMPLE_FREQ;
+    q.x = q.x + qDot2 * SAMPLE_FREQ;
+    q.y = q.y + qDot3 * SAMPLE_FREQ;
+    q.z = q.z + qDot4 * SAMPLE_FREQ;
     
     /* 四元数归一化 */
     quat_normalize(&q);
@@ -206,18 +206,6 @@ void quaternion_update(void)
     /* 计算欧拉角 */
     euler = quaternion_to_euler(q);
 }
-
-//-------------------------------------------------------------------------------------------------------------------
-// 函数简介     获取当前四元数函数
-// 参数说明     void
-// 返回参数     Quaternion: 当前的四元数值
-// 使用示例     Quaternion current_q = get_quaternion();
-//-------------------------------------------------------------------------------------------------------------------
-Quaternion get_quaternion(void) 
-{
-    return q;
-}
-
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     四元数转欧拉角函数，仅计算偏航角
 // 参数说明     q: 输入的四元数

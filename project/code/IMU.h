@@ -6,6 +6,8 @@
 #define PI      3.14159265358979323846f      /* 圆周率 */
 #define speed_threshold 20000                /* 设定ins采样距离*/
 #define ins_speed  2000                      /* 设定ins运行速度*/
+#define RAD_TO_DEG(x) ((x) * 180.0f / PI)       /* 弧度转角度 */
+#define DEG_TO_RAD(x) ((x) * PI / 180.0f)       /* 角度转弧度 */
 /* IMU数据结构体，存储校准后的数据 */
 typedef struct
 {
