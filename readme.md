@@ -108,23 +108,7 @@
    - 通过按键退出测试
 
 4. **core_trace(void)** - 核心循迹函数
-   - 实现小车的循迹控制逻辑（待实现）
-
-### 使用示例
-```c
-// 初始化PID控制器和控制系统
-PidInit();
-control_init();
-
-// 在主循环中更新控制系统
-control_update();
-
-// 输出到电机
-control_output();
-
-// 测试控制系统
-control_test();
-```
+   - 实现小车的循迹控制逻辑（小车实际下地两天不到驱动全炸了）
 
 ## key.c 和 key.h 功能说明
 
@@ -174,27 +158,6 @@ control_test();
 
 ### 常量
 1. **LONG_PRESS_TIME** - 长按时间阈值，默认为10（约400ms）
-
-### 使用示例
-```c
-// 初始化按键
-key_into();
-
-// 在主循环中处理按键输入
-button_entry();
-
-// 检查按键状态
-if(button1) {
-    // 按键1被按下，执行相应动作
-}
-
-if(button5) {
-    // 确认按键被按下，执行相应动作
-}
-
-// 测试按键状态
-key_text();
-```
 
 ## IMU.c 功能说明
 
@@ -255,7 +218,7 @@ key_text();
    - 可在定时器中断中调用
 
 #### 显示函数
-1. **imu963ra_text()** - IMU传感器原始数据显示函数
+1. **imu660ra_text()** - IMU传感器原始数据显示函数
    - 显示加速度和陀螺仪原始读数
 
 2. **quaternion_display()** - 显示四元数和欧拉角
@@ -335,31 +298,16 @@ key_text();
 7. **function_system_info()** - 系统信息显示功能
 
 ## image.c 功能说明
-
-### 全局变量
-1. **image_data** - 图像数据数组，用于存储100x100的图像数据
-
 ### 功能函数
 
 1. **image_path()** - 路径绘制函数
    - 结合yaw角度和编码器数据绘制路径
    - 在IPS200屏幕上实时显示运动轨迹
    - 支持路径重置和颜色变化
-   
-### 使用示例
-```c
-// 绘制路径
-image_path();
-
-```
 
 ## 逐飞助手功能说明
 
 ### 通信接口
-1. **逐飞助手初始化函数**
-   - seekfree_assistant_oscilloscope_init() - 初始化逐飞助手和无线串口通信
-   - 使用BLE6A20蓝牙模块作为通信接口
-
 ### 参数设置
 1. **通道功能**
    - 通道0: 控制模式选择
@@ -406,19 +354,17 @@ image_path();
    - 角度数据
    - 角速度数据
    - 电感数据
+## 所有使用方式均放在菜单以及逐飞助手通道中
+   -目前发车只能通过上位机拉到对应的通道进行发车，速度和角度都能调（可以寻迹也可以当遥控车玩）
 
-### 使用示例
-```c
-// 初始化逐飞助手
-seekfree_assistant_oscilloscope_init();
+# 调试过程
 
-// 在主循环中处理数据
-seekfree_assistant_data_analysis();
-
-// 发送数据到示波器
-seekfree_assistant_oscilloscope_data.dat[0] = value1;
-seekfree_assistant_oscilloscope_data.dat[1] = value2;
-seekfree_assistant_oscilloscope_data.dat[2] = value3;
-seekfree_assistant_oscilloscope_data.dat[3] = value4;
-seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
-```
+## 遇到过的问题
+   - 在进行陀螺仪测试的时候尝试过对角速度计进行纯积分的形式，但是测试下来总会与预测角度有个倍数的偏差，于是在四元数计算的时候将这个倍数的偏差用一个除法去除了。
+   -（考虑到ai8051资源问题就把加速度计去除了，原先的计算中有加速度计进行梯度修正，要是想纯角速度计算的再准点可以多套几阶龙格库塔）
+   - 别的在测试过程中就一路畅通无阻了，除了因为用的王的foc，还有硬件那边可能也出了点问题，foc当时还是测试版，全部爆炸了
+   - 因为用的正交编码器，而系统已经没有资源了，于是直接abs绝对值计算了编码器值（反正小车也不用倒退）
+   - 当初把eeprom用错了，实际上eeprom没什么页的，直接进位计算导入就好，将所有pid和电感大小数值计算出来以后把数据导进code就不用再管了
+## 额外的功能
+   - 因为资源问题我将游戏和部分代码进行了移除和删减，很多逐飞原有的库和封装进行了删除，需要的话可以自行导入
+# 感谢逐飞以及王的开源
