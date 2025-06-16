@@ -11,9 +11,9 @@
 /* IMU数据结构体，存储校准后的数据 */
 typedef struct
 {
-    float gyro_x;     /* X轴角速度，弧度/秒 */
-    float gyro_y;     /* Y轴角速度，弧度/秒 */
-    float gyro_z;     /* Z轴角速度，弧度/秒 */
+    float gyro_x;     /* X轴角速度 */
+    float gyro_y;     /* Y轴角速度 */
+    float gyro_z;     /* Z轴角速度 */
 } imu_data_t;
 
 /* 四元数结构体 */
